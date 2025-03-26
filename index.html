@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trucking Calculator – Pro</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/circle-m-favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/circle-m-favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/circle-m-favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/circle-m-favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/circle-m-favicon/site.webmanifest" />
+    <script>
+        window.MAPS_API_KEY = '%%MAPS_API_KEY%%';
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="branding">
+            <img src="assets/circle-m-logo.png" alt="Circle M Landscaping logo" class="logo">
+            <div class="brand-text">
+                <p class="tagline">Always Delivering Quality – Trusted Landscape Supply in Spokane & the Northwest</p>
+            </div>
+        </div>
+    </header>    
+    <div id="calculator" class="calculator">
+        <header class="calculator-header">
+            <h1>Trucking Cost Calculator</h1>
+        </header>
+        <form id="calcForm" novalidate>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input 
+                    type="text" 
+                    id="address" 
+                    name="address" 
+                    placeholder="Enter delivery address" 
+                    aria-describedby="address-help" 
+                    required>
+                    <span id="address-help" class="help-text" aria-live="polite" style="display: none;"></span>
+            </div>
+            <div class="form-group">
+                <label for="material">Material:</label>
+                <select id="material" name="material">
+                    <optgroup label="Soils">
+                        <option value="3_way_garden_soil" data-unit="yard">3-Way Garden Soil</option>
+                        <option value="barrtech" data-unit="yard">Barrtech</option>
+                        <option value="bedding_sand" data-unit="yard">Bedding Sand</option>
+                        <option value="bio_infiltration_soil" data-unit="yard">Bio Infiltration Soil</option>
+                        <option value="bio_retention_soil" data-unit="yard">Bio Retention Soil</option>
+                        <option value="bio_retention_soil_no_sandy_loam" data-unit="yard">Bio Retention Soil - No Sandy Loam</option>
+                        <option value="economy_topsoil" data-unit="yard">Economy Topsoil</option>
+                        <option value="organic_cert_garden_soil" data-unit="yard">Organic Cert. Garden Soil</option>
+                        <option value="premium_screened_topsoil" data-unit="yard">Premium Screened Topsoil</option>
+                        <option value="premium_turf" data-unit="yard">Premium Turf</option>
+                        <option value="sandy_loam" data-unit="yard">Sandy Loam</option>
+                    </optgroup>
+                    <optgroup label="Sand & Gravel">
+                        <option value="1_minus_crushed_structural" data-unit="ton">1" Minus Crushed Structural</option>
+                        <option value="3_minus_crushed_concrete" data-unit="ton">3" Minus Crushed (Concrete)</option>
+                        <option value="3_minus_structural_round" data-unit="ton">3" Minus Structural Round</option>
+                        <option value="58_114_basalt_minus_gravel" data-unit="ton">5/8" & 1 1/4" Basalt Minus Gravel</option>
+                        <!-- <option value="3_minus_crushed_basalt" data-unit="ton">3" Minus Crushed Basalt</option> -->
+                        <option value="58_114_granite_minus_gravel" data-unit="ton">5/8" & 1 1/4" Granite Minus Gravel</option>
+                        <option value="asphalt_grindings" data-unit="ton">Asphalt Grindings</option>
+                        <option value="c33_sand" data-unit="ton">C33 Sand</option>
+                        <option value="course_sand" data-unit="ton">Course Sand</option>
+                        <option value="pea_gravel" data-unit="ton">Pea Gravel</option>
+                        <option value="sand_gravel_concrete_mix" data-unit="ton">Sand & Gravel Concrete Mix</option>
+                        <option value="white_sand" data-unit="ton">White Sand</option>
+                    </optgroup>
+                    <optgroup label="Rock Products">
+                        <option value="1_12_rainbow_river_rock" data-unit="ton">1 1/2" Rainbow River Rock</option>
+                        <option value="1_14_champagne_rock" data-unit="ton">1 1/4" Champagne Rock</option>
+                        <option value="1_14_china_white_rock" data-unit="ton">1 1/4" China White Rock</option>
+                        <option value="1_granite_chips" data-unit="ton">1" Granite Chips</option>
+                        <option value="1_to_3_basalt_chips" data-unit="ton">1" to 3" Basalt Chips</option>
+                        <option value="2_blueslate_woodstone" data-unit="ton">2" Blueslate Woodstone</option>
+                        <option value="2_elk_hide" data-unit="ton">2" Elk Hide</option>
+                        <option value="34_river_rock" data-unit="ton">3/4" River Rock</option>
+                        <option value="1_12_river_rock" data-unit="ton">1 1/2" River Rock</option>
+                        <option value="2_4_river_rock" data-unit="ton">2-4" River Rock</option>
+                        <option value="34_114_basalt_chips" data-unit="ton">3/4" & 1 1/4" Basalt Chips</option>
+                        <option value="38_2_2_to_6_riverbed_mix" data-unit="ton">3/8" & 2" & 2 to 6" Riverbed Mix</option>
+                        <option value="autumn_gold" data-unit="ton">Autumn Gold: Lane Mt</option>
+                        <option value="black_lava_rock" data-unit="ton">Black Lava Rock</option>
+                        <option value="red_lava_rock" data-unit="ton">Red Lava Rock</option>
+                    </optgroup>
+                    <optgroup label="Bark Products">
+                        <option value="aged_dark_fines" data-unit="yard">Aged Dark Fines</option>
+                        <option value="engineered_playground_chips" data-unit="yard">Engineered Playground Chips</option>
+                        <option value="fresh_fines" data-unit="yard">Fresh Fines</option>
+                        <option value="large_nugget" data-unit="yard">Large Nugget</option>
+                        <option value="medium_fine" data-unit="yard">Medium Fine</option>
+                        <option value="medium_shred" data-unit="yard">Medium Shred</option>
+                        <option value="small_nugget" data-unit="yard">Small Nugget</option>
+                    </optgroup>
+                    <optgroup label="Boulders">
+                        <option value="fractured_granite" data-unit="ton">Fractured Granite</option>
+                        <option value="round_basalt" data-unit="ton">Round Basalt</option>
+                        <option value="round_granite" data-unit="ton">Round Granite</option>
+                        <option value="valley_boulders" data-unit="ton">Valley Boulders</option>
+                    </optgroup>
+                    <optgroup label="Deicer Salt">
+                        <option value="bulk_ice_kicker_blue_salt" data-unit="ton">Bulk - Ice Kicker Blue Salt</option>
+                        <option value="bulk_white_quicksalt" data-unit="ton">Bulk - White QuickSalt</option>
+                        <option value="deicing_salt_sand_mix" data-unit="ton">De-Icing Salt & Sand Mix</option>
+                        <option value="deicing_salt_sand_torp_mix" data-unit="ton">De-Icing Salt & Sand Torp Mix</option>
+                    </optgroup>
+                </select>
+                
+                
+            </div>
+            <div class="form-group">
+                <label for="tonsNeeded">Yards/Tons Needed:</label>
+                <input 
+                    type="number" 
+                    id="tonsNeeded" 
+                    name="tonsNeeded" 
+                    placeholder="Enter amount needed" 
+                    min="3" 
+                    step="1" 
+                    aria-describedby="tons-help" 
+                    required>
+                    <span id="tons-help" class="help-text" aria-live="polite" style="display: none;"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit">Calculate Cost</button>
+            </div>
+            <!-- Loader element -->
+            <div id="loader" aria-live="polite">Calculating, please wait...</div>
+            <div class="form-group">
+            <label>Subtotal (Price per Yard/Ton):</label>
+            <div
+                type="text" 
+                id="loadDetails"
+                name="loadDetails" 
+                class="load-details"
+                readonly>
+            </div>
+            </div>
+            <div class="form-group">
+                <label for="totalCost">Total Cost:</label>
+                <input 
+                    type="text" 
+                    id="totalCost" 
+                    name="totalCost" 
+                    readonly 
+                    aria-readonly="true">
+            </div>
+        </form>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-columns">
+          <!-- Contact Info -->
+          <div class="footer-col">
+            <h3>Contact Us</h3>
+            <p>📞 <a href="tel:5099283255">(509) 928-3255</a></p>
+            <p>🌐 <a href="https://circlemlandscape.com" target="_blank">circlemlandscape.com</a></p>
+          </div>
+      
+          <!-- Circle M Main -->
+          <div class="footer-col footer-col--middle">
+            <h3>Circle M Main</h3>
+            <p>
+                <span class="icon">📍</span>
+                <span class="address-text">
+                  <a href="https://maps.google.com/?q=1820 N University Rd, Spokane Valley WA" target="_blank">
+                    1820 N University Rd<br>Spokane Valley, WA
+                  </a>
+                </span>
+            </p>
+            <p>
+                <span class="icon">🕒</span>
+                <span class="address-text">
+                  Mon–Fri: 7:00am–5:00pm<br>
+                  Sat: 8:00am–4:00pm<br>
+                  Sun: Closed
+                </span>
+            </p>
+          </div>
+      
+          <!-- Circle M North -->
+          <div class="footer-col">
+            <h3>Circle M North</h3>
+            <p>
+                <span class="icon">📍</span>
+                <span class="address-text">
+                  <a href="https://maps.google.com/?q=1208 E Hawthorne Rd, Spokane WA" target="_blank">
+                    1208 E Hawthorne Rd<br>Spokane, WA
+                  </a>
+                </span>
+            </p>
+            <p>
+                <span class="icon">🕒</span>
+                <span class="address-text">
+                  Mon–Fri: 7:00am–5:00pm<br>
+                  Sat–Sun: Closed Till Spring
+                </span>
+            </p>
+          </div>
+        </div>
+      
+        <!-- Bottom Footer Bar -->
+        <div class="footer-bottom">
+          <p>&copy; 2025 Circle M Landscaping. All rights reserved.</p>
+        </div>
+      </footer>      
+                 
+
+    <!-- Custom JavaScript -->
+    <script src="js/script.js"></script>
+</body>
+</html>

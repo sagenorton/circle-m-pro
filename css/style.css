@@ -1,0 +1,247 @@
+/* General body and layout styles */
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+    margin: 0;
+    background: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    gap: 2rem;
+}
+
+/* Styling for the header */
+.site-header {
+    width: 100vw;
+    padding: 1rem 2rem;
+    background-color: #f4f4f4;
+    border-bottom: 2px solid #ccc;
+    text-align: center;
+    font-family: "Anton", sans-serif;
+    letter-spacing: .15px;
+}
+
+.branding {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo {
+    max-height: 100px;
+    width: auto;
+}
+
+.tagline {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
+    max-width: 700px;
+}
+
+
+/* Styling for the calculator container */
+.calculator {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    max-width: 100%; /* Ensure the layout adapts on smaller screens */
+}
+
+/* Header styling */
+.calculator-header {
+    margin-bottom: 20px;
+    text-align: center;
+    font-family: "Anton", sans-serif;
+    letter-spacing: .5px;
+}
+
+/* Form styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-family: "source sans pro", sans-serif;
+    font-weight: 900;
+}
+
+form input[type="text"],
+form input[type="number"],
+form select,
+form button {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.load-details {
+    min-height: 40px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #f5f5f5;
+    color: #888;
+    font-weight: bold;
+    cursor: not-allowed;
+}
+
+form button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form button:hover {
+    background-color: #45a049;
+    transform: scale(1.03); /* Add slight scaling effect */
+}
+
+#totalCost {
+    font-weight: bold;
+}
+
+/* Loader styling */
+#loader {
+    display: none; /* Hidden by default */
+    text-align: center;
+    margin-top: 10px;
+    font-size: 16px;
+    color: #555;
+}
+
+#loader.active {
+    display: block; /* Show the loader when active */
+    font-weight: bold;
+}
+
+.help-text {
+    color: red !important;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none; /* Hidden by default */
+}
+
+/* Disabled input styling */
+input[readonly] {
+    background-color: #f5f5f5;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* Focus styling for accessibility */
+input:focus,
+select:focus,
+button:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+/* Footer styling */
+.site-footer {
+    background-color: #f4f4f4;
+    color: #333;
+    width: 100vw;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+}
+
+.footer-columns {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    max-width: 50%;
+    margin: 0 auto;
+    padding: 1rem 1rem;
+    box-sizing: border-box;
+} 
+
+.footer-col h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-family: "Anton", sans-serif;
+    letter-spacing: .25px;
+}
+
+.icon {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.footer-col p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.address-text {
+    display: block;
+    margin-left: 0.25rem;
+}
+
+.footer-col a {
+    color: #2c7a2c;
+    text-decoration: none;
+}
+
+.footer-col a:hover {
+    text-decoration: underline;
+}
+
+.footer-bottom {
+    background-color: #ddd;
+    color: #444;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.85rem;
+    border-top: 1px solid #ccc;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    .calculator {
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    form button {
+        font-size: 14px;
+    }
+    .footer-columns {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .footer-col {
+        width: 100%;
+        text-align: center;
+    }
+}
