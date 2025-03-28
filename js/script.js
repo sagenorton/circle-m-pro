@@ -1626,33 +1626,29 @@ function displayResults(totalCost, detailedCosts, unit) {
     const groupedTrucks = {};
 
     detailedCosts.forEach(load => {
-      const key = `${load.truckName}-${load.rate}-${load.max}`;
-    
-      if (!groupedTrucks[key]) {
-        groupedTrucks[key] = {
-          truckName: load.truckName,
-          rate: load.rate,
-          max: load.max,
-          totalAmount: 0,
-          costPerUnit: load.costPerUnit
-        };
-      }
-    
-      groupedTrucks[key].totalAmount += load.amount;
+        // Corrected grouping key to include truck name, amount, and rate
+        const key = `${load.truckName}-${load.amount}-${load.rate}`;
+        
+        if (!groupedTrucks[key]) {
+            groupedTrucks[key] = {
+                truckName: load.truckName,
+                amount: load.amount,
+                rate: load.rate,
+                costPerUnit: load.costPerUnit,
+                count: 0
+            };
+        }
+
+        // Increment count properly to match console output
+        groupedTrucks[key].count += 1;
     });
-    
-    // Calculate truck count and display
+
+    // Correctly display each truck and amount as shown in the console
     Object.values(groupedTrucks).forEach(truck => {
-        const count = Math.ceil(truck.totalAmount / truck.max);
-      
-        const perTruckAmount = Math.ceil(truck.totalAmount / count);
-      
         const detail = document.createElement('p');
-        detail.textContent = `${count} ${truck.truckName}(s) of ${perTruckAmount} ${unit}s at $${truck.costPerUnit.toFixed(2)} per ${unit}`;
+        detail.textContent = `${truck.count} ${truck.truckName}(s) of ${truck.amount} ${unit}s at $${truck.costPerUnit.toFixed(2)} per ${unit}`;
         detailSection.appendChild(detail);
-      
-        console.log(`${count} ${truck.truckName}(s) of ${perTruckAmount} ${unit}s at $${truck.costPerUnit.toFixed(2)} per ${unit}`);
-      });          
+    });
 
     // Prevent NaN or undefined total cost issues
     if (isNaN(totalCost) || totalCost === undefined) {
@@ -1660,7 +1656,7 @@ function displayResults(totalCost, detailedCosts, unit) {
         totalCost = 0;
     }
 
-    // Display total cost
+    // Display total cost correctly
     totalCostElement.value = "$" + totalCost.toFixed(2);
     console.log(`Total Cost: $${totalCost.toFixed(2)}`);
 }
