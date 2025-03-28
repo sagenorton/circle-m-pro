@@ -46,7 +46,7 @@ body {
 /* Styling for the calculator container */
 .calculator {
     background: white;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 400px;
@@ -59,6 +59,10 @@ body {
     text-align: center;
     font-family: "Anton", sans-serif;
     letter-spacing: .5px;
+}
+
+.calculator-header b {
+    color: crimson;
 }
 
 /* Form styling */
