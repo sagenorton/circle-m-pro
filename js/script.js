@@ -1645,7 +1645,7 @@ function displayResults(totalCost, detailedCosts, unit) {
     Object.values(groupedTrucks).forEach(truck => {
         const count = Math.ceil(truck.totalAmount / truck.max);
       
-        const perTruckAmount = Math.floor(truck.totalAmount / count);
+        const perTruckAmount = Math.ceil(truck.totalAmount / count);
       
         const detail = document.createElement('p');
         detail.textContent = `${count} ${truck.truckName}(s) of ${perTruckAmount} ${unit}s at $${truck.costPerUnit.toFixed(2)} per ${unit}`;
