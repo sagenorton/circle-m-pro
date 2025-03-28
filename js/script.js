@@ -1136,7 +1136,12 @@ async function calculateYardTruckLoads(remaining, materialInfo, location) {
     yardTrucks.sort((a, b) => b.max - a.max);
 
     while (remaining > 0) {
-        let bestYardTruck = yardTrucks.find(truck => remaining >= truck.min) || yardTrucks[0];
+        let bestYardTruck = yardTrucks.find(truck => remaining >= truck.min);
+
+    if (!bestYardTruck) {
+        console.warn(`No suitable truck found for ${remaining} ${materialInfo.sold_by}s.`);
+        break; 
+    }
 
         if (!bestYardTruck) {
             console.error(`No suitable yard truck found for ${remaining} tons.`);
@@ -1320,7 +1325,13 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location) {
     pitTrucks.sort((a, b) => b.max - a.max);
 
     while (remaining > 0) {
-        let bestPitTruck = pitTrucks.find(truck => remaining >= truck.min) || pitTrucks[0];
+        let bestPitTruck = pitTrucks.find(truck => remaining >= truck.min);
+
+    if (!bestPitTruck) {
+        console.warn(`No suitable pit truck found for ${remaining} ${materialInfo.sold_by}s.`);
+        break; 
+    }
+
         let loadAmount = Math.min(bestPitTruck.max, remaining);
         remaining -= loadAmount;
 
