@@ -1137,32 +1137,27 @@ async function calculateYardTruckLoads(remaining, materialInfo, location) {
 
     while (remaining > 0) {
         let bestYardTruck = yardTrucks.find(truck => remaining >= truck.min);
-
-    if (!bestYardTruck) {
-        console.warn(`No suitable truck found for ${remaining} ${materialInfo.sold_by}s.`);
-        break; 
-    }
-
+    
         if (!bestYardTruck) {
-            console.error(`No suitable yard truck found for ${remaining} tons.`);
+            console.warn(`No suitable yard truck found for ${remaining} ${materialInfo.sold_by}s.`);
             break;
         }
-
-        let loadAmount = Math.min(bestYardTruck.max, remaining);
+    
+        let loadAmount = Math.floor(Math.min(bestYardTruck.max, remaining));
         remaining -= loadAmount;
-
+    
         yardLoads.push({
             truckName: bestYardTruck.name,
             amount: loadAmount,
             rate: bestYardTruck.rate,
             max: bestYardTruck.max
         });
-
-        // Break the loop if the remaining load is fully assigned
-        if (remaining <= 0) {
-            break;
+    
+        if (remaining < bestYardTruck.min && remaining > 0) {
+            console.warn(`Remaining load ${remaining} is too small for any available truck.`);
+            remaining = 0;
         }
-    }
+    }    
     
     console.log(`Yard Truck Loads for ${location.name}:`, yardLoads);
     return { yardLoads, remaining };
@@ -1326,22 +1321,27 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location) {
 
     while (remaining > 0) {
         let bestPitTruck = pitTrucks.find(truck => remaining >= truck.min);
-
-    if (!bestPitTruck) {
-        console.warn(`No suitable pit truck found for ${remaining} ${materialInfo.sold_by}s.`);
-        break; 
-    }
-
-        let loadAmount = Math.min(bestPitTruck.max, remaining);
+    
+        if (!bestPitTruck) {
+            console.warn(`No suitable pit truck found for ${remaining} ${materialInfo.sold_by}s.`);
+            break;
+        }
+    
+        let loadAmount = Math.floor(Math.min(bestPitTruck.max, remaining));
         remaining -= loadAmount;
-
+    
         pitLoads.push({
             truckName: bestPitTruck.name,
             amount: loadAmount,
             rate: bestPitTruck.rate,
             max: bestPitTruck.max
         });
-    }
+    
+        if (remaining < bestPitTruck.min && remaining > 0) {
+            console.warn(`Remaining load ${remaining} is too small for any available truck.`);
+            remaining = 0;
+        }
+    }    
 
     console.log(`Completed Pit Load Calculation for: ${location.name}`);
     return { pitLoads };
