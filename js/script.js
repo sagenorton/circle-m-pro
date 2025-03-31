@@ -1567,16 +1567,14 @@ async function computePitCosts(pitLoads, pit, distances, addressInput, yardLoads
             });
 
             totalCost += costPerLoad;
-
-            // Log breakdown for this truck type
-            console.log(`Truck Type: ${load.truckName}`);
-            console.log(`  Amount: ${load.amount}`);
-            console.log(`  Rate: $${load.rate}`);
-            console.log(`  Cost Per Unit: $${costPerUnit.toFixed(2)}`);
-            console.log(`  Cost Per Load: $${costPerLoad.toFixed(2)}`);
         });
 
-        // Log journey details for this truck type
+        // Log breakdown for this truck type
+        console.log(`Truck Type: ${load.truckName}`);
+        console.log(`  Amount: ${load.amount}`);
+        console.log(`  Rate: $${load.rate}`);
+        console.log(`  Cost Per Unit: $${costPerUnit.toFixed(2)}`);
+        console.log(`  Cost Per Load: $${costPerLoad.toFixed(2)}`);
         console.log(`Journey Details for ${truckName}:`);
         console.log(`  Total Load: ${truckTotalLoad}`);
         console.log(`  Total Trips: ${truckTrips}`);
