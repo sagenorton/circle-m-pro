@@ -679,12 +679,15 @@ const materialData = {
     "aged_dark_fines": {
         "sold_by": "yard",
         "locations": [
-            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A"] },
-            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 36.50, "trucks": ["truck_A"] },
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 36.50, "trucks": ["truck_A", "truck_C"] },
             { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 27.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
         ],
         "truck_A": [
             {"name": "Small Truck", "min": 1, "max": 15, "rate": 140}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
         ],
         "truck_D": [
             {"name": "Semi Truck", "min": 70, "max": 70, "rate": 185}
@@ -1530,17 +1533,25 @@ async function computePitCosts(pitLoads, pit, distances, addressInput, yardLoads
     // Group the loads by truck type
     let groupedLoads = {};
     pitLoads.forEach(load => {
-        if (!groupedLoads[load.truckName]) {
-            groupedLoads[load.truckName] = [];
+        const key = `${load.truckName}-${load.amount}-${load.rate}`;
+        if (!groupedLoads[key]) {
+            groupedLoads[key] = {
+                truckName: load.truckName,
+                amount: load.amount,
+                rate: load.rate,
+                count: 0,
+                loads: []
+            };
         }
-        groupedLoads[load.truckName].push(load);
-    });
+        groupedLoads[key].count++;
+        groupedLoads[key].loads.push(load);
+    });    
 
     // Calculate costs for each truck type
     for (let truckName in groupedLoads) {
         let truckLoads = groupedLoads[truckName];
-        let truckTotalLoad = truckLoads.reduce((sum, load) => sum + load.amount, 0);
-        let truckTrips = truckLoads.length;
+        let truckTotalLoad = truckLoads.loads.reduce((sum, load) => sum + load.amount, 0);
+        let truckTrips = truckLoads.loads.length;
 
         // Calculate journey time for this truck type
         let truckTotalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (truckTrips * 2 - 1)) + driveTimeDropToYard;
@@ -1548,7 +1559,7 @@ async function computePitCosts(pitLoads, pit, distances, addressInput, yardLoads
         let truckTotalJourneyTime = truckAdjustedTravelTime + (36 * truckTrips);
 
         // Calculate cost for each load of this truck type
-        truckLoads.forEach(load => {
+        truckLoads.loads.forEach(load => {
             let costPerUnit = (((truckTotalJourneyTime / 60) * load.rate) / truckTotalLoad) + (pit.price || 0);
 
             if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
