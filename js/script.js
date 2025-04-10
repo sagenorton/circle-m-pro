@@ -1819,7 +1819,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Setup event listener for changes in the selected material
     const materialSelect = document.getElementById("material");
-    materialSelect.addEventListener("change", updateUnitRestrictions);
+    materialSelect.addEventListener("change", () => {
+        updateUnitRestrictions();
+        calculateCost(); // Recalculate when material changes
+    });
 
     // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
@@ -1837,6 +1840,14 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             helperText.style.display = "none";
         }
+
+        calculateCost(); // Recalculate when tonsNeeded changes
+    });
+
+    // Setup event listener for changes in the address input
+    const addressInput = document.getElementById("address");
+    addressInput.addEventListener("input", () => {
+        calculateCost(); // Recalculate when address changes
     });
 
     // Add event listener for form submission to prevent the default form behavior and refresh functions
