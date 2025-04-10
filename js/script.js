@@ -1833,20 +1833,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-    
-        // If the input is empty, clear the helper text and return without validation
-        if (!this.value.trim()) {
-            helperText.style.display = "none";
-            return;
-        }
-    
+
         if (value < min) {
             helperText.style.display = "block";
-            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
+            helperText.textContent = `Please enter a value of at least 3 ${unit}s.`;
         } else {
             helperText.style.display = "none";
         }
-    
+
         calculateCost(); // Recalculate when tonsNeeded changes
     });
 
