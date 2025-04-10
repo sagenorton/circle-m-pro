@@ -991,7 +991,7 @@ function validateInput(tonsNeeded, dropOffAddress) {
     if (isNaN(tonsNeeded) || tonsNeeded < min ) {
         tonsField.style.border = "2px solid red";
         tonsHelper.style.display = "block";
-        tonsHelper.textContent = `Please enter a value of ${min} or more.`;
+        tonsHelper.textContent = `Please enter a value of 3 or more.`;
         return false;
     }
 
@@ -1821,33 +1821,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const materialSelect = document.getElementById("material");
     materialSelect.addEventListener("change", () => {
         updateUnitRestrictions();
-        calculateCost(); // Recalculate when material changes
+        calculateCost();
     });
 
     // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
     const helperText = document.getElementById("tons-help");
     tonsInput.addEventListener("input", function () {
-        const selectedMaterial = document.getElementById("material").value;
-        const materialInfo = materialData[selectedMaterial];
-        const unit = materialInfo?.sold_by || 'unit';
-        const min = parseInt(this.min);
-        const value = parseFloat(this.value);
-
-        if (value < min) {
-            helperText.style.display = "block";
-            helperText.textContent = `Please enter a value of at least 3 ${unit}s.`;
-        } else {
-            helperText.style.display = "none";
-        }
-
-        calculateCost(); // Recalculate when tonsNeeded changes
+        calculateCost();
     });
 
     // Setup event listener for changes in the address input
     const addressInput = document.getElementById("address");
     addressInput.addEventListener("input", () => {
-        calculateCost(); // Recalculate when address changes
+        calculateCost();
     });
 
     // Add event listener for form submission to prevent the default form behavior and refresh functions
