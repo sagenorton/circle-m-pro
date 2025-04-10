@@ -1820,21 +1820,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Setup event listener for changes in the selected material
     const materialSelect = document.getElementById("material");
     materialSelect.addEventListener("change", () => {
-        updateUnitRestrictions();
-        calculateCost();
+        updateUnitRestrictions(); // Update restrictions for the new material
+        calculateCost(); // Recalculate cost automatically
     });
 
     // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
     const helperText = document.getElementById("tons-help");
     tonsInput.addEventListener("input", function () {
-        calculateCost();
-    });
+        const selectedMaterial = document.getElementById("material").value;
+        const materialInfo = materialData[selectedMaterial];
+        const unit = materialInfo?.sold_by || 'unit';
+        const min = parseInt(this.min);
+        const value = parseFloat(this.value);
 
-    // Setup event listener for changes in the address input
-    const addressInput = document.getElementById("address");
-    addressInput.addEventListener("input", () => {
-        calculateCost();
+        if (value < min) {
+            helperText.style.display = "block";
+            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
+        } else {
+            helperText.style.display = "none";
+        }
     });
 
     // Add event listener for form submission to prevent the default form behavior and refresh functions
