@@ -1,4 +1,9 @@
 /* General body and layout styles */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     font-family: 'Source Sans Pro', sans-serif;
     margin: 0;
