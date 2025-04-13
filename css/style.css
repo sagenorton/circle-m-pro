@@ -239,33 +239,26 @@ button:focus {
         padding: 20px;
         width: auto;
     }
-
     .calculator {
         width: 90%;
         padding: 1rem;
         box-shadow: none;
-        border-radius: 0;
     }
-
     .calculator-header {
         width: 100%;
         margin-bottom: 1rem;
     }
-
     .branding .logo {
         max-height: 70px;
     }
-
     .tagline {
         font-size: 0.9rem;
         text-align: center;
         padding: 0 1rem;
     }
-
     .form-group {
         margin-bottom: 1rem;
     }
-
     form input[type="text"],
     form input[type="number"],
     form select,
@@ -273,11 +266,9 @@ button:focus {
         font-size: 14px;
         padding: 10px;
     }
-
     form button {
         font-size: 14px;
     }
-
     .footer-columns {
         flex-direction: column;
         align-items: center;
