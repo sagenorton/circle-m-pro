@@ -610,11 +610,11 @@ const materialData = {
             {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
         ]
     },
-    "38_2_2_to_6_riverbed_mix": {
+    "58_2_2_to_6_riverbed_mix": {
         "sold_by": "ton",
         "locations": [
-            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 56.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
-            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 56.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 65.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 65.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
         ],
         "truck_A": [
             {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
