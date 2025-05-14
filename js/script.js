@@ -62,6 +62,855 @@ window.initMap = function () {
 
 
 
+
+/* --------------------- Material and pricing data -------------------------- */
+const materialData = {
+    // Soils
+    "3_way_garden_soil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 39.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 47.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "barrtech": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 39.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 41.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "bedding_sand": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 21.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 13.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "bio_infiltration_soil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 34.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "bio_retention_soil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 34.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "bio_retention_soil_no_sandy_loam": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 34.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "economy_topsoil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 12.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 12.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "organic_cert_garden_soil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 31.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 32.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 24.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 40, "max": 40, "rate": 185}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 50, "max": 50, "rate": 185}
+        ]
+    },
+    "premium_screened_topsoil": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 28.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 24.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "premium_turf": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 30.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 28.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    "sandy_loam": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 23.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 21.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "DC PIT", "address": "611 W Denison-Chattaroy Rd, Deer Park, WA 99006", "price": 12.00, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
+        ]
+    },
+    // Sand and Gravel
+    "1_minus_crushed_structural": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 11.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "3_minus_crushed_concrete": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 9.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "3_minus_structural_round": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 17.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 9.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "58_114_basalt_minus_gravel": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 25.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 26.25, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Perry PIT", "address": "13302 N Perry St, Spokane, WA 99208", "price": 21.45, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Cooridor PIT", "address": "47.683646613378116, -117.55831219627463", "price": 12.38, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "58_114_granite_minus_gravel": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 22.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 24.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "JMAC PIT", "address": "47.728763, -117.034429", "price": 12.38, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "CDA PIT", "address": "47.716832, -117.035684", "price": 14.85, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "asphalt_grindings": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 38.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 34.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hattenburgs PIT", "address": "47.757245449473906, -117.36542930230672", "price": 29.00, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "c33_sand": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 21.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 13.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "course_sand": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 21.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 13.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "pea_gravel": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 27.25, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 31.25, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Sullivan Pre-Mix PIT", "address": "1902 N Sullivan Rd, Spokane Valley, WA 99216", "price": 18.15, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "sand_gravel_concrete_mix": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 36.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 36.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "white_sand": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 97.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Lane Mountain PIT", "address": "3119 WA-231, Valley, WA 99181", "price": 74.00, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    // Rocks
+    "1_12_rainbow_river_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 88.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 97.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "1_14_champagne_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 124.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 122.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "White Stone Calcium PIT", "address": "2432 US-395, Chewelah, WA 99109", "price": 102.60, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "1_14_china_white_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 126.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "White Stone Calcium PIT", "address": "2432 US-395, Chewelah, WA 99109", "price": 104.50, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "1_granite_chips": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 42.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "CDA Paving & Concrete PIT", "address": "47.716832, -117.035684", "price": 31.35, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "1_to_3_basalt_chips": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 39.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "HardRock PIT", "address": "47.339342, -116.827806", "price": 17.10, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "2_blueslate_woodstone": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 77.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 69.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Iron Mountain/Scrivanich PIT", "address": "48.29835281266716, -117.14118002098378", "price": 47.25, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "2_elk_hide": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 58.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 62.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Elk Hide PIT", "address": "47.332319, -116.538415", "price": 31.50, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "34_river_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 39.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "JMAC PIT", "address": "47.728763, -117.034429", "price": 19.95, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "1_12_river_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 39.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "JMAC PIT", "address": "47.728763, -117.034429", "price": 19.95, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "2_4_river_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 37.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 40.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "CDA Paving & Concrete PIT", "address": "47.716832, -117.035684", "price": 26.60, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "34_114_basalt_chips": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 39.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "HardRock PIT", "address": "47.339342, -116.827806", "price": 17.10, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "58_2_2_to_6_riverbed_mix": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 65.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 65.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "autumn_gold": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 74.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 70.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Lane Mountain PIT", "address": "3119 WA-231, Valley, WA 99181", "price": 53.20, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "black_lava_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 124.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 124.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "red_lava_rock": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 107.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 107.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    // Barks
+    "aged_dark_fines": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 35.50, "trucks": ["truck_A", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 36.50, "trucks": ["truck_A", "truck_C"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 27.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 15, "rate": 140}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 70, "max": 70, "rate": 185}
+        ]
+    },
+    "engineered_playground_chips": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 53.00, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 54.00, "trucks": ["truck_A"] },
+            { "name": "Premiere PIT", "address": "48.181955, -117.006770", "price": 47.25, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    "fresh_fines": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 32.50, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 33.50, "trucks": ["truck_A"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 27.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    "large_nugget": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 59.00, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 60.00, "trucks": ["truck_A"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 54.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    "medium_fine": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 32.50, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 33.50, "trucks": ["truck_A"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 27.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    "medium_shred": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 28.50, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 29.50, "trucks": ["truck_A"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 22.50, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    "small_nugget": {
+        "sold_by": "yard",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 91.00, "trucks": ["truck_A"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 90.00, "trucks": ["truck_A"] },
+            { "name": "Idaho Forest Group PIT", "address": "4447 E Chilco Rd, Athol, ID 83801", "price": 85.50, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_D"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 25, "rate": 140}
+        ],
+        "truck_D": [
+            {"name": "Semi Truck", "min": 100, "max": 100, "rate": 185}
+        ]
+    },
+    // Boulders
+    "fractured_granite": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 118.00, "trucks": ["truck_A", "truck_B", "truck_E"] },
+            { "name": "New Port Equipment PIT", "address": "328772 U.S. Rte 2, Newport, WA 99156", "price": 93.00, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_E"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_E": [
+            {"name": "Transfer Truck", "min": 16, "max": 30, "rate": 185}
+        ]
+    },
+    "round_basalt": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 83.00, "trucks": ["truck_A", "truck_B", "truck_E"] },
+            { "name": "Cheney Boulder PIT", "address": "47.46744669160258, -117.545016359873", "price": 75.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_E"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_E": [
+            {"name": "Transfer Truck", "min": 16, "max": 30, "rate": 185}
+        ]
+    },
+    "round_granite": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 97.00, "trucks": ["truck_A", "truck_B", "truck_E"] },
+            { "name": "Post Falls Pleasant View Interstate PIT", "address": "1545 N Pleasant View Rd, Post Falls, ID 83854", "price": 75.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_E"] },
+            { "name": "JMAC PIT", "address": "47.728763, -117.034429", "price": 75.00, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_E"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_E": [
+            {"name": "Transfer Truck", "min": 16, "max": 30, "rate": 185}
+        ]
+    },
+    "valley_boulders": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 132.00, "trucks": ["truck_A", "truck_B", "truck_E"] },
+            { "name": "Weusthoff Excavation PIT", "address": "48.187739, -117.730438", "price": 108.50, "closest_yard": "1208 E Hawthorne Rd, Spokane, WA 99217", "trucks": ["truck_A", "truck_B", "truck_E"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_E": [
+            {"name": "Transfer Truck", "min": 16, "max": 30, "rate": 185}
+        ]
+    },
+    // Deicer Salts
+    "bulk_ice_kicker_blue_salt": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 253.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Marietta PIT", "address": "15201 E Marietta Ave, Spokane Valley, WA 99216", "price": 208.50, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "bulk_white_quicksalt": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 225.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Marietta PIT", "address": "15201 E Marietta Ave, Spokane Valley, WA 99216", "price": 184.50, "closest_yard": "1820 N University Rd, Spokane Valley, WA 99206", "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "deicing_salt_sand_mix": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 48.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 45.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    },
+    "deicing_salt_sand_torp_mix": {
+        "sold_by": "ton",
+        "locations": [
+            { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 54.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
+            { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 51.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
+        ],
+        "truck_A": [
+            {"name": "Small Truck", "min": 1, "max": 8, "rate": 140}
+        ],
+        "truck_B": [
+            {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
+        ],
+        "truck_C": [
+            {"name": "Super Truck", "min": 16, "max": 25, "rate": 185}
+        ]
+    }
+};
+
+
 const truckNames = {
     "truck_A": "Small Truck",
     "truck_B": "Solo Truck",
@@ -80,22 +929,16 @@ const yardLocations = {
 
 
 /* --------------------- Function to update unit restrictions dynamically -------------------------- */
-async function updateUnitRestrictions() {
+function updateUnitRestrictions() {
     const materialSelect = document.getElementById("material");
     const selectedOption = materialSelect.options[materialSelect.selectedIndex];
     const selectedMaterial = selectedOption.value;
     const unit = selectedOption.getAttribute("data-unit");
     const tonsInput = document.getElementById("tonsNeeded");
 
-    // Fetch material info from backend function
-    const materialInfo = await fetch('/.netlify/functions/materials?material=' + encodeURIComponent(selectedMaterial))
-    .then(res => res.json())
-    .catch(err => {
-        console.error("Failed to fetch material data:", err);
-        return null;
-    });
-
-    if (!materialInfo || materialInfo.error) {
+    // Get material info
+    const materialInfo = materialData[selectedMaterial];
+    if (!materialInfo) {
         console.error(`Material info not found for ${selectedMaterial}`);
         return;
     }
@@ -361,6 +1204,164 @@ async function calculateYardTruckLoads(remaining, materialInfo, location) {
 
 
 
+
+/* --------------------- Core function to calculate costs for Yards -------------------------- */
+async function computeYardCosts(truckLoadInfo, yard, distances, addressInput, materialInfo, suppressLogs = false) {
+    let totalCost = 0;
+    let detailedCosts = [];
+
+    // Ensure we have valid distances
+    if (!distances || distances.length === 0) {
+        if (!suppressLogs) {
+            console.warn(`No distances found for ${yard.name}. Fetching new distances.`);
+        }
+
+        if (!addressInput) {
+            if (!suppressLogs) {
+                console.error("ERROR: addressInput is missing! Cannot fetch distances.");
+            }
+            return { totalCost: Infinity, detailedCosts: [], location: yard };
+        }
+
+        // Calculate distances if not available
+        distances = await calculateDistances([{ origin: yard.address, destination: addressInput }]);
+
+        if (!distances || distances.length === 0) {
+            if (!suppressLogs) {
+                console.error(`ERROR: No valid distances retrieved for ${yard.name}.`);
+            }
+            return { totalCost: Infinity, detailedCosts: [], location: yard };
+        }
+    }
+
+    // Check if initial drive time is available, if not, find it from distances
+    if (!yard.initialDriveTime) {
+        let driveTimeEntry = distances.find(d =>
+            d.from.trim().toLowerCase() === yard.address.trim().toLowerCase() ||
+            d.to.trim().toLowerCase() === yard.address.trim().toLowerCase()
+        );
+
+        if (!driveTimeEntry) {
+            if (!suppressLogs) {
+                console.error(`ERROR: Could not find matching drive time for yard ${yard.name}`);
+            }
+            return { totalCost: Infinity, detailedCosts: [], location: yard };
+        }
+
+        yard.initialDriveTime = driveTimeEntry.duration;
+    }
+
+    let driveTime = yard.initialDriveTime || 0;
+
+    if (!driveTime) {
+        let driveTimeEntry = distances.find(d =>
+            d.from.trim().toLowerCase() === yard.address.trim().toLowerCase() ||
+            d.to.trim().toLowerCase() === yard.address.trim().toLowerCase()
+        );
+
+        if (driveTimeEntry) {
+            driveTime = driveTimeEntry.duration;
+            yard.initialDriveTime = driveTime;
+        }
+    }
+
+    if (!truckLoadInfo || !Array.isArray(truckLoadInfo) || truckLoadInfo.length === 0) {
+        if (!suppressLogs) {
+            console.error(`ERROR: No valid truck loads for ${yard.name}.`);
+        }
+        return { totalCost: Infinity, detailedCosts: [], location: yard };
+    }
+
+    // Calculate the cost for each yard load
+    for (let load of truckLoadInfo) {
+        if (!load.amount || !load.rate) {
+            if (!suppressLogs) {
+                console.warn("Skipping invalid load data:", load);
+            }
+            continue;
+        }
+
+        // Calculate cost per unit and cost per load
+        if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+            if (!suppressLogs) {
+                console.error(`ERROR: Invalid truck load data for ${load.truckName}:`, load);
+            }
+            continue;
+        }
+
+        let costPerUnit = (((((driveTime * 2 * 1.15) + 36) / 60) * load.rate) / (load.amount || 1)) + (yard.price || 0);
+
+        if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
+            if (!suppressLogs) {
+                console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
+            }
+            costPerUnit = 0;
+        }
+
+        let costPerLoad = costPerUnit * load.amount;
+        detailedCosts.push({
+            truckName: load.truckName,
+            rate: load.rate,
+            amount: load.amount,
+            costPerUnit,
+            costPerLoad
+        });
+
+        totalCost += costPerLoad;
+    }
+
+    if (isNaN(totalCost) || totalCost === 0) {
+        if (!suppressLogs) {
+            console.error(`ERROR: Total Cost calculation failed for yard ${yard.name}. Returning 'Infinity'.`);
+        }
+        return { totalCost: Infinity, detailedCosts: [], location: yard };
+    }
+
+    // Suppress logs if suppressLogs is true
+    if (!suppressLogs) {
+        console.log("===================================");
+        console.log("Yard Calculation:");
+        console.log(`Yard Chosen: ${yard.name}, ${yard.address}`);
+        console.log(`Base Price: $${yard.price}`);
+        console.log(`Duration to Drop Off: ${driveTime} min`);
+        console.log(`Round Trip Duration: ${(driveTime * 2).toFixed(2)} min`);
+        console.log(`Number of Trips: ${truckLoadInfo.length}`);
+        console.log(`Total Duration: ${(truckLoadInfo.length * driveTime * 2).toFixed(2)} min`);
+    }
+
+    // Group trucks and suppress logs if needed
+    let groupedTrucks = {};
+    truckLoadInfo.forEach(load => {
+        const truckGroupKey = `${load.truckName}-${load.amount}-${load.rate}`;
+        if (!groupedTrucks[truckGroupKey]) {
+            groupedTrucks[truckGroupKey] = {
+                count: 0,
+                amount: load.amount,
+                costPerUnit: (((driveTime * 2 * 1.15 + 36) / 60 * load.rate) / load.amount + yard.price),
+                truckName: load.truckName
+            };
+        }
+        groupedTrucks[truckGroupKey].count++;
+    });
+
+    if (!suppressLogs) {
+        // Log grouped trucks
+        Object.values(groupedTrucks).forEach(truck => {
+            console.log(`  • ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
+        });
+
+        console.log(`\nFinal Total: $${totalCost.toFixed(2)}`);
+        console.log("===================================");
+    }
+
+    return { totalCost, detailedCosts, location: yard };
+}
+
+
+
+
+
+
 /* --------------------- Determine the best truck loads for Pits -------------------------- */
 async function calculatePitTruckLoads(amountNeeded, materialInfo, location, finalClosestYard, distances, addressInput) {
     let pitLoads = [];
@@ -604,24 +1605,167 @@ async function assignToYard(remaining, materialInfo, finalClosestYard, distances
 
 
 
+
+
+/* --------------------- Core function to compute costs for Pits -------------------------- */
+async function computePitCosts(pitLoads, pit, distances, addressInput, yardLoads, yardTotalCost, materialInfo, yardLocations, amountNeeded) {
+
+    // Ensure these values are defined to prevent errors
+    yardTotalCost = yardTotalCost || 0;
+    materialInfo = materialInfo || {};
+    amountNeeded = amountNeeded || 0;
+
+
+    // Check if there are valid pit truck loads
+    if (!pitLoads || pitLoads.length === 0) {
+        console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
+        return { totalCost: Infinity };
+    }
+
+    // Get the closest yard data based on distance (not material availability)
+    const closestYardData = await getClosestYard(addressInput);
+    if (!closestYardData) {
+    console.error("ERROR: Could not determine closest yard.");
+    return { totalCost: Infinity };
+    }
+
+    const finalClosestYard = closestYardData.yardName;
+    let driveTimeDropToYard = closestYardData.duration;
+
+    // Ensure yardLocations is defined before using it
+    if (!yardLocations || !yardLocations[finalClosestYard]) {
+    console.error(`ERROR: Yard location not found in yardLocations for ${finalClosestYard}.`);
+    return { totalCost: Infinity };
+    }
+
+    let totalCost = 0;
+    let detailedCosts = [];
+
+    // Find the drive times for the journey
+    let driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
+    let driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
+
+    if (!driveTimeYardToPit || !driveTimePitToDrop) {
+        console.error(`ERROR: Missing drive time for ${pit.name}.`);
+        return;
+    }
+
+    // Calculate the total load amount and the number of trips needed
+    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
+    let tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+
+    // Calculate the total drive time for all trips
+    let totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
+
+    // Adjust the travel time with a multiplier
+    let adjustedTravelTime = totalDriveTime * 1.15;
+
+    // Calculate the final total journey time including load/unload time
+    let totalJourneyTime = adjustedTravelTime + (36 * tripCount);
+
+    lastJourneyTime = totalJourneyTime;
+
+    // Calculate the cost for each pit load
+    pitLoads.forEach(load => {
+        if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+            console.error(`ERROR: Invalid pit load found:`, load);
+            return;
+        }
+
+        let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+
+        if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
+            console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
+            costPerUnit = 0;
+        }
+
+        let costPerLoad = costPerUnit * load.amount;
+
+        detailedCosts.push({
+            truckName: load.truckName,
+            rate: load.rate,
+            amount: load.amount,
+            costPerUnit,
+            costPerLoad
+        });
+
+        totalCost += costPerLoad;
+    });   
+
+    let yardCostData = null;
+
+    if (yardLoads.length > 0) {
+        console.log(`Processing overflow yard loads separately to ensure correct yard calculation.`);
+    
+        let assignedYard = materialInfo.locations.find(yard => yard.name === finalClosestYard);
+        if (!assignedYard) {
+            console.error(`ERROR: Could not find assigned yard (${finalClosestYard}) in material locations.`);
+            return { totalCost: Infinity, detailedCosts: [], location: pit, pitLoads, yardLoads };
+        }
+    
+        // Compute distances for yard separately
+        let yardDistances = await calculateDistances([{ origin: assignedYard.address, destination: addressInput }]);
+    
+        // Ensure correct yard pricing is used
+        let yardCostData = await computeYardCosts(yardLoads, assignedYard, yardDistances, addressInput, materialInfo);
+    
+        detailedCosts = detailedCosts.concat(yardCostData.detailedCosts);
+        totalCost += yardCostData.totalCost;
+    }    
+    
+    console.log("===================================");
+    console.log("Pit Calculations:");
+    console.log(`Pit:`);
+    console.log(`  Starting from: ${pit.closest_yard}`);
+    console.log(`  Going to Pit: ${pit.name}, ${pit.address}`);
+    console.log(`  Duration/Distance: ${driveTimeYardToPit} min`);
+    console.log(`  Drop off at: ${addressInput}`);
+    console.log(`  Duration/Distance: ${driveTimePitToDrop} min`);
+    console.log(`  Number of trips: ${tripCount}`);
+    console.log(`  Ending at: ${finalClosestYard}`);
+    console.log(`  Duration/Distance: ${driveTimeDropToYard} min`);
+    console.log(`  Total Duration: ${totalJourneyTime.toFixed(2)} min`);
+    
+    // Group trucks
+    let groupedTrucks = {};
+    pitLoads.forEach(load => {
+        const truckGroupKey = `${load.truckName}-${load.amount}-${load.rate}`;
+        if (!groupedTrucks[truckGroupKey]) {
+            groupedTrucks[truckGroupKey] = {
+                count: 0,
+                amount: load.amount,
+                costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0),
+                truckName: load.truckName
+            };
+        }
+        groupedTrucks[truckGroupKey].count++;
+    });
+    
+    // Log grouped trucks
+    console.log(`  Truck(s):`);
+    Object.values(groupedTrucks).forEach(truck => {
+        console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
+    });
+    
+    console.log(`  Amount from pit: ${totalLoadAmount} ${materialInfo.sold_by}s`);
+    console.log(`  Base Price: $${pit.price}`);
+    console.log(`\nFinal Total: $${totalCost.toFixed(2)}`);
+    console.log("===================================");
+
+    return { totalCost, detailedCosts, location: pit, pitLoads, yardLoads, yardCostData };
+}
+
+
+
+
+
+
 /* --------------------- Main function to calculate costs -------------------------- */
 async function calculateCost() {
     const addressInput = document.getElementById('address').value;
     const selectedMaterial = document.getElementById('material').value;
     const amountNeeded = parseFloat(document.getElementById('tonsNeeded').value);
-
-    const materialInfo = await fetch('/.netlify/functions/materials?material=' + encodeURIComponent(selectedMaterial))
-    .then(res => res.json())
-    .catch(err => {
-        console.error("Failed to fetch material data:", err);
-        return null;
-    });
-
-    if (!materialInfo) {
-        console.error("No material info returned. Aborting calculation.");
-        return;
-    }
-
+    const materialInfo = materialData[selectedMaterial];
     const unit = materialInfo?.sold_by || 'unit';
 
     // Validate user input
@@ -675,21 +1819,7 @@ async function calculateCost() {
         if (isYard) {
             let { yardLoads } = await calculateYardTruckLoads(amountNeeded, materialInfo, location);
             let distances = await calculateDistances([{ origin: location.address, destination: addressInput }]);
-            
-            let yardCosts = await fetch('/.netlify/functions/calculateCost', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'yard',
-                    truckLoadInfo: yardLoads,
-                    yard: location,
-                    distances,
-                    addressInput,
-                    materialKey: selectedMaterial,
-                    suppressLogs: false
-                })
-            }).then(res => res.json());
-
+            let yardCosts = await computeYardCosts(yardLoads, location, distances, addressInput, materialInfo);
             costResults.push(yardCosts);
         } else {
             let pitResult = await calculatePitTruckLoads(amountNeeded, materialInfo, location, finalClosestYard, [], addressInput);
@@ -702,24 +1832,7 @@ async function calculateCost() {
                     { origin: addressInput, destination: finalClosestYardLocation.address }
                 ]);
 
-                let pitCosts = await fetch('/.netlify/functions/calculateCost', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'pit',
-                        pitLoads,
-                        pit: location,
-                        distances,
-                        addressInput,
-                        yardLoads,
-                        yardTotalCost: totalCost,
-                        materialKey: selectedMaterial,
-                        yardLocations,
-                        amountNeeded,
-                        suppressLogs: false
-                    })
-                }).then(res => res.json());
-
+                let pitCosts = await computePitCosts(pitLoads, location, distances, addressInput, yardLoads, totalCost, materialInfo, yardLocations, amountNeeded);
                 if (pitCosts.totalCost > 0) {
                     console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
                     console.log(pitCosts.logOutput);
@@ -729,35 +1842,12 @@ async function calculateCost() {
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
             if (pitResult.splitPitYardCombo && isFinite(pitResult.splitPitYardCombo.totalCost)) {
-                pitResult.splitPitYardCombo.location = location;
+                pitResult.splitPitYardCombo.location = location; // needed for log + draw
                 pitResult.splitPitYardCombo.sourceType = "pit+yard";
                 pitResult.splitPitYardCombo.sourceAddress = location.address;
-
-                console.log(`Evaluated PIT+YARD Split Combo at ${location.name} - sending to backend`);
-
-                let splitCombo = await fetch('/.netlify/functions/calculateCost', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'pit',
-                    pit: location,
-                    pitLoads: pitResult.splitPitYardCombo.pitLoads,
-                    yardLoads: pitResult.splitPitYardCombo.yardLoads,
-                    yardTotalCost: pitResult.splitPitYardCombo.yardLoads.reduce((sum, d) => sum + (d.costPerLoad || (d.amount * d.rate)), 0),
-                    addressInput,
-                    distances: await calculateDistances([
-                    { origin: location.closest_yard, destination: location.address },
-                    { origin: location.address, destination: addressInput },
-                    { origin: addressInput, destination: finalClosestYardLocation.address }
-                    ]),
-                    materialKey: selectedMaterial,
-                    yardLocations,
-                    amountNeeded,
-                    suppressLogs: false
-                })
-                }).then(res => res.json());
-
-                costResults.push(splitCombo);
+            
+                console.log(`Evaluated PIT+YARD Split Combo at ${location.name} - $${pitResult.splitPitYardCombo.totalCost.toFixed(2)}`);
+                costResults.push(pitResult.splitPitYardCombo);
             }            
 
         }
@@ -789,20 +1879,7 @@ async function calculateCost() {
             const bComboLoads = [firstLoad, secondLoad];
     
             let distances = await calculateDistances([{ origin: location.address, destination: addressInput }]);
-
-            const yardCost = await fetch('/.netlify/functions/calculateCost', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'yard',
-                    truckLoadInfo: bComboLoads,
-                    yard: location,
-                    distances,
-                    addressInput,
-                    materialKey: selectedMaterial,
-                    suppressLogs: false
-                })
-            }).then(res => res.json());
+            const yardCost = await computeYardCosts(bComboLoads, location, distances, addressInput, materialInfo);
     
             if (yardCost.totalCost && isFinite(yardCost.totalCost)) {
                 yardCost.label = "B+B Combo"; // optional for display clarity
@@ -928,6 +2005,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load the Google Maps API
     loadGoogleMapsApi();
 
+    // Store original material locations for resetting
+    const originalMaterialLocations = JSON.parse(JSON.stringify(materialData));
+
     // Setup event listener for changes in the selected material
     const materialSelect = document.getElementById("material");
     materialSelect.addEventListener("change", updateUnitRestrictions);
@@ -935,17 +2015,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
     const helperText = document.getElementById("tons-help");
-    tonsInput.addEventListener("input", async function () {
+    tonsInput.addEventListener("input", function () {
         const selectedMaterial = document.getElementById("material").value;
-        const materialInfo = await fetch('/.netlify/functions/materials?material=' + encodeURIComponent(selectedMaterial))
-        .then(res => res.json())
-        .catch(err => {
-            console.error("Failed to fetch material data:", err);
-            return null;
-        });
-
-        if (!materialInfo) return;
-
+        const materialInfo = materialData[selectedMaterial];
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
@@ -962,6 +2034,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("calcForm");
     form.addEventListener("submit", function (event) {
         event.preventDefault();
+
+        // Reset materialInfo.locations to the original state before filtering pits/yards
+        Object.keys(materialData).forEach(key => {
+            materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
+        });
 
         // Call the cost calculation function
         calculateCost();
