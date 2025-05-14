@@ -19,7 +19,6 @@ exports.handler = async function (event) {
       pit,                // Pit object
       pitLoads,           // Pit truck loads
       yardLoads = [],     // If doing a split combo
-      yardTotalCost = 0,  // Optional, fallback cost for yard portion
       materialKey,        // Key from materialData.json
       distances = [],     // Pre-fetched distances if available
       suppressLogs = false
@@ -55,43 +54,21 @@ exports.handler = async function (event) {
 
     // Compute pit portion
     const pitResult = await computePitCosts({
-        pitLoads,
-        pit,
-        distances,
-        addressInput,
-        yardLoads: [], // just pit for now
-        yardTotalCost: 0,
-        materialInfo,
-        yardLocations,
-        amountNeeded: pitLoads.reduce((sum, load) => sum + load.amount, 0),
-        suppressLogs
+    pitLoads,
+    pit,
+    distances,
+    addressInput,
+    yardLoads, // ✅ send actual yardLoads for split
+    materialInfo,
+    yardLocations,
+    suppressLogs
     });
 
-    // If there is a split yard combo attached, compute the yard portion
-    let yardResult = { totalCost: 0, detailedCosts: [], logOutput: '' };
-    if (yardLoads.length > 0 && yardTotalCost > 0) {
-        yardResult = {
-        totalCost: yardTotalCost,
-        detailedCosts: yardLoads.map(load => ({
-            truckName: load.truckName,
-            amount: load.amount,
-            rate: load.rate,
-            costPerUnit: load.rate,
-            costPerLoad: load.amount * load.rate
-        })),
-        logOutput: `YARD (split portion): ${yardLoads.length} load(s) totaling $${yardTotalCost.toFixed(2)}`
-        };
-    }
-
-    // Merge both
     result = {
-        totalCost: pitResult.totalCost + yardResult.totalCost,
-        detailedCosts: [...(pitResult.detailedCosts || []), ...(yardResult.detailedCosts || [])],
-        logOutput: `${pitResult.logOutput || ''}\n\n${yardResult.logOutput || ''}`,
-        location: pit,
-        label: yardLoads.length > 0 ? 'PIT+YARD Split Combo' : 'PIT',
-        sourceType: yardLoads.length > 0 ? 'pit+yard' : 'pit',
-        sourceAddress: pit.address
+    ...pitResult,
+    label: yardLoads.length > 0 ? 'PIT+YARD Split Combo' : 'PIT',
+    sourceType: yardLoads.length > 0 ? 'pit+yard' : 'pit',
+    sourceAddress: pit.address
     };
     }
 
