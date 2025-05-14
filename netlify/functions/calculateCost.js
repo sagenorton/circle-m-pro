@@ -58,7 +58,8 @@ exports.handler = async function (event) {
     pit,
     distances,
     addressInput,
-    yardLoads, // ✅ send actual yardLoads for split
+    yardLoads,
+    yardTotalCost,
     materialInfo,
     yardLocations,
     suppressLogs

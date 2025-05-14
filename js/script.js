@@ -743,7 +743,7 @@ async function calculateCost() {
                     pit: location,
                     pitLoads: pitResult.splitPitYardCombo.pitLoads,
                     yardLoads: pitResult.splitPitYardCombo.yardLoads,
-                    yardTotalCost: pitResult.splitPitYardCombo.totalCost - pitResult.splitPitYardCombo.detailedCosts.filter(d => d.truckName.toLowerCase().includes("pit")).reduce((sum, d) => sum + d.costPerLoad, 0),
+                    yardTotalCost: pitResult.splitPitYardCombo.yardLoads.reduce((sum, d) => sum + (d.costPerLoad || (d.amount * d.rate)), 0),
                     addressInput,
                     distances: await calculateDistances([
                     { origin: location.closest_yard, destination: location.address },
