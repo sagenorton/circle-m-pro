@@ -49,12 +49,19 @@ exports.handler = async function (event) {
     }
 
     else if (type === 'pit') {
-      const yardLocations = {};
-      for (const location of materialInfo.locations) {
-        yardLocations[location.name] = location;
-      }
+    if (!pit || !pitLoads || !Array.isArray(pitLoads) || pitLoads.length === 0) {
+        return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid or missing 'pit' or 'pitLoads' data." })
+        };
+    }
 
-      result = await computePitCosts({
+    const yardLocations = {};
+    for (const location of materialInfo.locations) {
+        yardLocations[location.name] = location;
+    }
+
+    result = await computePitCosts({
         pitLoads,
         pit,
         distances,
@@ -65,7 +72,7 @@ exports.handler = async function (event) {
         yardLocations,
         amountNeeded,
         suppressLogs
-      });
+    });
     }
 
     else {
