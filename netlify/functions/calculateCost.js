@@ -20,7 +20,6 @@ exports.handler = async function (event) {
       pitLoads,           // Pit truck loads
       yardLoads = [],     // If doing a split combo
       yardTotalCost = 0,  // Optional, fallback cost for yard portion
-      amountNeeded = 0,   // Total needed (for context)
       materialKey,        // Key from materialData.json
       distances = [],     // Pre-fetched distances if available
       suppressLogs = false
@@ -49,30 +48,51 @@ exports.handler = async function (event) {
     }
 
     else if (type === 'pit') {
-    if (!pit || !pitLoads || !Array.isArray(pitLoads) || pitLoads.length === 0) {
-        return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Invalid or missing 'pit' or 'pitLoads' data." })
-        };
-    }
-
     const yardLocations = {};
     for (const location of materialInfo.locations) {
         yardLocations[location.name] = location;
     }
 
-    result = await computePitCosts({
+    // Compute pit portion
+    const pitResult = await computePitCosts({
         pitLoads,
         pit,
         distances,
         addressInput,
-        yardLoads,
-        yardTotalCost,
+        yardLoads: [], // just pit for now
+        yardTotalCost: 0,
         materialInfo,
         yardLocations,
-        amountNeeded,
+        amountNeeded: pitLoads.reduce((sum, load) => sum + load.amount, 0),
         suppressLogs
     });
+
+    // If there is a split yard combo attached, compute the yard portion
+    let yardResult = { totalCost: 0, detailedCosts: [], logOutput: '' };
+    if (yardLoads.length > 0 && yardTotalCost > 0) {
+        yardResult = {
+        totalCost: yardTotalCost,
+        detailedCosts: yardLoads.map(load => ({
+            truckName: load.truckName,
+            amount: load.amount,
+            rate: load.rate,
+            costPerUnit: load.rate,
+            costPerLoad: load.amount * load.rate
+        })),
+        logOutput: `YARD (split portion): ${yardLoads.length} load(s) totaling $${yardTotalCost.toFixed(2)}`
+        };
+    }
+
+    // Merge both
+    result = {
+        totalCost: pitResult.totalCost + yardResult.totalCost,
+        detailedCosts: [...(pitResult.detailedCosts || []), ...(yardResult.detailedCosts || [])],
+        logOutput: `${pitResult.logOutput || ''}\n\n${yardResult.logOutput || ''}`,
+        location: pit,
+        label: yardLoads.length > 0 ? 'PIT+YARD Split Combo' : 'PIT',
+        sourceType: yardLoads.length > 0 ? 'pit+yard' : 'pit',
+        sourceAddress: pit.address
+    };
     }
 
     else {
