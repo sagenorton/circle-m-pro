@@ -729,12 +729,33 @@ async function calculateCost() {
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
             if (pitResult.splitPitYardCombo && isFinite(pitResult.splitPitYardCombo.totalCost)) {
-                pitResult.splitPitYardCombo.location = location; // needed for log + draw
+                pitResult.splitPitYardCombo.location = location;
                 pitResult.splitPitYardCombo.sourceType = "pit+yard";
                 pitResult.splitPitYardCombo.sourceAddress = location.address;
-            
-                console.log(`Evaluated PIT+YARD Split Combo at ${location.name} - $${pitResult.splitPitYardCombo.totalCost.toFixed(2)}`);
-                costResults.push(pitResult.splitPitYardCombo);
+
+                console.log(`Evaluated PIT+YARD Split Combo at ${location.name} - sending to backend`);
+
+                let splitCombo = await fetch('/.netlify/functions/calculateCost', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'pit',
+                        pit: location,
+                        pitLoads: pitResult.splitPitYardCombo.pitLoads,
+                        yardLoads: pitResult.splitPitYardCombo.yardLoads,
+                        yardTotalCost: pitResult.splitPitYardCombo.totalCost - pitResult.splitPitYardCombo.detailedCosts.filter(d => d.truckName.toLowerCase().includes("pit")).reduce((sum, d) => sum + d.costPerLoad, 0),
+                        addressInput,
+                        distances: await calculateDistances([
+                            { origin: location.closest_yard, destination: location.address },
+                            { origin: location.address, destination: addressInput },
+                            { origin: addressInput, destination: finalClosestYardLocation.address }
+                        ]),
+                        materialKey: selectedMaterial,
+                        suppressLogs: false
+                    })
+                }).then(res => res.json());
+
+                costResults.push(splitCombo);
             }            
 
         }
