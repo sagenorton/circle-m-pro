@@ -1,102 +1,77 @@
-const { computeYardCosts, computePitCosts } = require('./costFunctions');
-const materialData = require('./materialData.json');
+const fetch = require('node-fetch');
 
 exports.handler = async function (event) {
   try {
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Method Not Allowed' }),
-      };
-    }
-
-    const body = JSON.parse(event.body);
     const {
-      type,               // "yard" or "pit"
-      addressInput,       // Drop-off address
-      yard,               // Yard object (name, address, price, etc.)
-      truckLoadInfo,      // For yard calculations
-      pit,                // Pit object
-      pitLoads,           // Pit truck loads
-      yardLoads = [],     // If doing a split combo
-      materialKey,        // Key from materialData.json
-      distances = [],     // Pre-fetched distances if available
-      suppressLogs = false
-    } = body;
+      pitLoads,
+      pit,
+      distances,
+      addressInput,
+      yardLoads,
+      yardTotalCost,
+      materialInfo,
+      yardLocations,
+      amountNeeded
+    } = JSON.parse(event.body);
 
-    if (!materialKey || !materialData[materialKey]) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Material key '${materialKey}' not found in materialData.` }),
-      };
-    }
-
-    const materialInfo = materialData[materialKey];
-
-    let result;
-
-    if (type === 'yard') {
-      result = await computeYardCosts({
-        truckLoadInfo,
-        yard,
+    // Call pit cost function
+    const pitResponse = await fetch(`${process.env.URL}/.netlify/functions/pitCostFunction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pitLoads,
+        pit,
         distances,
         addressInput,
+        yardLoads,
+        yardTotalCost,
         materialInfo,
-        suppressLogs
-      });
-    }
-
-    else if (type === 'pit') {
-    const yardLocations = {};
-    for (const location of materialInfo.locations) {
-        yardLocations[location.name] = location;
-    }
-
-    // Compute pit portion
-    const pitResult = await computePitCosts({
-    pitLoads,
-    pit,
-    distances,
-    addressInput,
-    yardLoads,
-    yardTotalCost,
-    materialInfo,
-    yardLocations,
-    suppressLogs
+        yardLocations,
+        amountNeeded
+      })
     });
 
-    result = {
-    ...pitResult,
-    label: yardLoads.length > 0 ? 'PIT+YARD Split Combo' : 'PIT',
-    sourceType: yardLoads.length > 0 ? 'pit+yard' : 'pit',
-    sourceAddress: pit.address
-    };
-    }
+    const pitResult = await pitResponse.json();
 
-    else {
+    // Call yard cost function
+    const yardResponse = await fetch(`${process.env.URL}/.netlify/functions/yardCostFunction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        truckLoadInfo: yardLoads,
+        yard: yardLocations[pitResult?.location?.closest_yard || "I90 Yard"],
+        distances,
+        addressInput,
+        materialInfo
+      })
+    });
+
+    const yardResult = await yardResponse.json();
+
+    const results = [pitResult, yardResult].filter(r => r && isFinite(r.totalCost));
+
+    if (results.length === 0) {
       return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Invalid type '${type}' provided.` }),
+        statusCode: 500,
+        body: JSON.stringify({ error: "No valid cost results available." })
       };
     }
+
+    // Find the cheapest option
+    const cheapest = results.reduce((min, current) =>
+      current.totalCost < min.totalCost ? current : min
+    );
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // Optional: configure for production
-      },
-      body: JSON.stringify(result)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cheapest)
     };
-
   } catch (err) {
-    console.error("Backend Error:", err);
+    console.error("ERROR in calculateCost backend:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: 'Internal Server Error',
-        details: err.message
-      })
+      body: JSON.stringify({ error: "Internal Server Error" })
     };
   }
 };
