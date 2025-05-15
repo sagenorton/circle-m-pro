@@ -171,7 +171,7 @@ function validateInput(tonsNeeded, dropOffAddress) {
     if (isNaN(tonsNeeded) || tonsNeeded < min ) {
         tonsField.style.border = "2px solid red";
         tonsHelper.style.display = "block";
-        tonsHelper.textContent = `Please enter a value of 3 or more.`;
+        tonsHelper.textContent = `Please enter a value of ${min} or more.`;
         return false;
     }
 
@@ -989,17 +989,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const materialData = await fetchMaterialData();
         const materialInfo = materialData?.[selectedMaterial];
         const unit = materialInfo?.sold_by || 'unit';
-
-        const truckMinimums = materialInfo?.locations?.flatMap(loc =>
-            loc.trucks.flatMap(t => materialInfo[t]?.map(truck => truck.min) || [])
-        ).filter(Boolean);
-
-        const trueMin = Math.min(...truckMinimums);
+        const min = parseInt(this.min);
         const value = parseFloat(this.value);
 
-        if (value < trueMin) {
+        if (value < min) {
             helperText.style.display = "block";
-            helperText.textContent = `Please enter a value of at least ${trueMin} ${unit}s.`;
+            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
         } else {
             helperText.style.display = "none";
         }
@@ -1010,28 +1005,9 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const amountNeeded = parseFloat(document.getElementById("tonsNeeded").value);
-        const selectedMaterial = document.getElementById("material").value;
         const materialData = await fetchMaterialData();
-        const tonsInput = document.getElementById("tonsNeeded");
-
-        if (!materialData || !materialData[selectedMaterial]) {
-            console.error("ERROR: Unable to fetch or find material data for validation.");
-            return;
-        }
-
-        const materialInfo = materialData[selectedMaterial];
-
-        const truckMinimums = materialInfo?.locations?.flatMap(loc =>
-            loc.trucks.flatMap(t => materialInfo[t]?.map(truck => truck.min) || [])
-        ).filter(Boolean);
-
-        const trueMin = Math.min(...truckMinimums);
-
-        if (isNaN(amountNeeded) || amountNeeded < trueMin) {
-            tonsInput.style.border = "2px solid red";
-            document.getElementById("tons-help").style.display = "block";
-            document.getElementById("tons-help").textContent = `Please enter a value of at least ${trueMin}.`;
+        if (!materialData) {
+            console.error("ERROR: Unable to fetch material data for reset.");
             return;
         }
 
