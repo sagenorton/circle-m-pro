@@ -171,7 +171,7 @@ function validateInput(tonsNeeded, dropOffAddress) {
     if (isNaN(tonsNeeded) || tonsNeeded < min ) {
         tonsField.style.border = "2px solid red";
         tonsHelper.style.display = "block";
-        tonsHelper.textContent = `Please enter a value of ${min} or more.`;
+        tonsHelper.textContent = `Please enter a value of 3 or more.`;
         return false;
     }
 
@@ -994,7 +994,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (value < min) {
             helperText.style.display = "block";
-            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
+            helperText.textContent = `Please enter a value of at least 3 ${unit}s.`;
         } else {
             helperText.style.display = "none";
         }
@@ -1004,6 +1004,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("calcForm");
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
+
+        const amountNeeded = parseFloat(document.getElementById("tonsNeeded").value);
+        const tonsInput = document.getElementById("tonsNeeded");
+        const min = parseInt(tonsInput.min);
+
+        if (isNaN(amountNeeded) || amountNeeded < min) {
+            tonsInput.style.border = "2px solid red";
+            document.getElementById("tons-help").style.display = "block";
+            document.getElementById("tons-help").textContent = `Please enter a value of at least ${min}.`;
+            return;
+        }
 
         const materialData = await fetchMaterialData();
         if (!materialData) {
