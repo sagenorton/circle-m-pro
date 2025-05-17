@@ -99,11 +99,22 @@ export async function handler(event) {
         return;
       }
 
-      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+      // Calculate per-load journey time:
+      const singleTripTime = driveTimeYardToPit + (driveTimePitToDrop * 2) + driveTimeDropToYard;
+      const adjustedTripTime = singleTripTime * 1.15 + 36;
+
+      // Calculate costPerUnit based on *that specific truck's journey*
+      let costPerUnit = ((adjustedTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
       if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
 
-      let costPerLoad = costPerUnit * load.amount;
-      detailedCosts.push({ ...load, costPerUnit, costPerLoad });
+      const costPerLoad = costPerUnit * load.amount;
+
+      detailedCosts.push({
+        ...load,
+        costPerUnit,
+        costPerLoad
+      });
+
       totalCost += costPerLoad;
     });
 
