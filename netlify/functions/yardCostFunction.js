@@ -8,8 +8,12 @@ exports.handler = async function (event) {
       distances,
       addressInput,
       materialInfo,
-      suppressLogs = false
+      suppressLogs
     } = JSON.parse(event.body);
+
+    if (!truckLoadInfo || !yard || !distances || !materialInfo) {
+      throw new Error("Missing required input fields.");
+    }
 
     let totalCost = 0;
     let detailedCosts = [];

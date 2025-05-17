@@ -4,15 +4,19 @@ exports.handler = async function (event) {
   try {
     const {
       pitLoads,
-      pit,
+      pitLocation,
       distances,
       addressInput,
       yardLoads = [],
-      yardTotalCost = 0,
+      totalYardCost = 0,
       materialInfo = {},
       yardLocations = {},
       amountNeeded = 0
     } = JSON.parse(event.body);
+
+    if (!pitLoads || !pitLocation || !distances || !materialInfo) {
+      throw new Error("Missing required input fields.");
+    }
 
     if (!pitLoads || pitLoads.length === 0) {
       console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
