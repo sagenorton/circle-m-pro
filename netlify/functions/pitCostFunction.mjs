@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
+import fetch from 'node-fetch';
 
-exports.handler = async function (event) {
+export async function handler(event) {
   try {
     const {
       pitLoads,

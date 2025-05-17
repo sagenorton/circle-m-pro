@@ -3,6 +3,10 @@
   publish = "."
   functions = "netlify/functions"
 
+  [functions]
+  node_bundler = "esbuild"
+  included_files = ["netlify/functions/materialData.json"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
