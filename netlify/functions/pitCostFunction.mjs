@@ -97,6 +97,7 @@ export async function handler(event) {
         truckName: load.truckName,
         rate: load.rate,
         amount: load.amount,
+        max: load.max,
         costPerUnit,
         costPerLoad
       });
