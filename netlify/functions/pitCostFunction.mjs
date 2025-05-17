@@ -143,12 +143,13 @@ export async function handler(event) {
     let groupedTrucks = {};
 
     detailedCosts.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.rate}-${load.costPerUnit.toFixed(2)}`;
+      const key = `${load.truckName}-${load.amount}-${load.rate}-${load.max}`;
       if (!groupedTrucks[key]) {
         groupedTrucks[key] = {
           truckName: load.truckName,
           amount: load.amount,
           rate: load.rate,
+          max: load.max,
           costPerUnit: load.costPerUnit,
           count: 1
         };
