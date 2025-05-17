@@ -97,26 +97,32 @@ export async function handler(event) {
       groupedByTruck[key].loads.push(load);
     }
 
-    // === Process each group independently ===
     for (const key in groupedByTruck) {
       const group = groupedByTruck[key];
       const groupLoads = group.loads;
-      const groupTotalAmount = groupLoads.reduce((sum, l) => sum + l.amount, 0);
+      const truckMax = group.max;
+      const truckRate = group.rate;
       const tripCount = groupLoads.length;
 
+      // Journey time specific to this group’s number of trips
       const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
       const adjustedTravelTime = totalDriveTime * 1.15;
       const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
 
+      const groupTotalAmount = groupLoads.reduce((sum, l) => sum + l.amount, 0);
+
       for (const load of groupLoads) {
-        const costPerUnit = (((totalJourneyTime / 60) * group.rate) / groupTotalAmount) + (pit.price || 0);
+        const proportion = load.amount / groupTotalAmount;
+        const timeForThisLoad = proportion * totalJourneyTime;
+
+        const costPerUnit = ((timeForThisLoad / 60) * truckRate) / load.amount + (pit.price || 0);
         const costPerLoad = costPerUnit * load.amount;
 
         detailedCosts.push({
           truckName: group.truckName,
-          rate: group.rate,
+          rate: truckRate,
           amount: load.amount,
-          max: group.max,
+          max: truckMax,
           costPerUnit,
           costPerLoad
         });
