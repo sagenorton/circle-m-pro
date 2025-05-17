@@ -105,7 +105,7 @@ export async function handler(event) {
         return;
       }
 
-      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / load.amount) + (pitLocation.price || 0);
+      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0);
       if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
 
       let costPerLoad = costPerUnit * load.amount;
@@ -180,7 +180,7 @@ export async function handler(event) {
           count: 0,
           amount: load.amount,
           truckName: load.truckName,
-          costPerUnit: (((totalJourneyTime / 60) * load.rate) / load.amount) + (pitLocation.price || 0)
+          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0)
         };
       }
       groupedTrucks[key].count++;
