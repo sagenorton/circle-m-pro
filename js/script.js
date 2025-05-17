@@ -465,8 +465,6 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
         }
     }
 
-    // === Standard Grouping Logic ===
-    let groupedLoads = {};
     let tempRemaining = amountNeeded;
 
     while (tempRemaining > 0) {
@@ -483,20 +481,13 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
         let loadAmount = Math.min(bestPitTruck.max, tempRemaining);
         tempRemaining -= loadAmount;
 
-        if (!groupedLoads[bestPitTruck.name]) {
-            groupedLoads[bestPitTruck.name] = [];
-        }
-
-        groupedLoads[bestPitTruck.name].push({
+        pitLoads.push({
             truckName: bestPitTruck.name,
             amount: loadAmount,
             rate: bestPitTruck.rate,
-            max: bestPitTruck.max
+            max: bestPitTruck.max,
+            type: bestPitTruck.type
         });
-    }
-
-    for (let truckName in groupedLoads) {
-        pitLoads = pitLoads.concat(groupedLoads[truckName]);
     }
 
     // Assign remaining to yard if needed
@@ -577,6 +568,8 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
 
         }
     }
+
+    console.log("Final pitLoads sent to backend:", JSON.stringify(pitLoads, null, 2));
 
     return {
         pitLoads,
