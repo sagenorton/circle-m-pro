@@ -95,7 +95,7 @@ export async function handler(event) {
 
     // Calculate shared trip details
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+    let tripCount = pitLoads.length;
 
     const totalDriveTime =
       driveTimeYardToPit +
@@ -112,15 +112,13 @@ export async function handler(event) {
         continue;
       }
 
-      // This truck's personal drive time:
-      const truckTripTime = (
-        driveTimeYardToPit +
-        driveTimePitToDrop +
-        driveTimePitToDrop +
-        driveTimeDropToYard
-      ) * 1.15 + 36;
+      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
 
-      const costPerUnit = ((truckTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
+      if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
+        console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
+        costPerUnit = 0;
+      }
+
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
