@@ -99,14 +99,16 @@ export async function handler(event) {
         continue;
       }
 
-      const truckTrips = Math.ceil(load.amount / load.max);
-      const thisTruckJourneyTime = (
+      // Each `load` already represents one truck load
+      const truckTrips = 1;
+
+      const journeyTime = (
         driveTimeYardToPit +
         (driveTimePitToDrop * (truckTrips * 2 - 1)) +
         driveTimeDropToYard
       ) * 1.15 + (36 * truckTrips);
 
-      const costPerUnit = (((thisTruckJourneyTime / 60) * load.rate) / load.amount) + (pit.price || 0);
+      const costPerUnit = (((journeyTime / 60) * load.rate) / load.amount) + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({ ...load, costPerUnit, costPerLoad });
