@@ -548,7 +548,7 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
             const pitCostData = await getPitCostData({
                 pitLoads: pitLoadsWithoutLast,
                 yardLoads: [],
-                pit: location,
+                pitLocation: location,
                 distances: pitDistances,
                 addressInput,
                 totalYardCost: 0,
@@ -665,7 +665,7 @@ async function assignToYard(remaining, materialInfo, finalClosestYard, distances
 async function getPitCostData({
     pitLoads,
     yardLoads,
-    pit,
+    pitLocation,
     distances,
     addressInput,
     totalYardCost,
@@ -680,7 +680,7 @@ async function getPitCostData({
             body: JSON.stringify({
                 pitLoads,
                 yardLoads,
-                pit,
+                pitLocation,
                 distances,
                 addressInput,
                 totalYardCost,
@@ -694,10 +694,9 @@ async function getPitCostData({
         return await response.json();
     } catch (err) {
         console.error("ERROR during fetch to pitCostFunction:", err);
-        return { totalCost: Infinity, detailedCosts: [], location: pit };
+        return { totalCost: Infinity, detailedCosts: [], location: pitLocation };
     }
 }
-
 
 
 
@@ -787,7 +786,7 @@ async function calculateCost() {
                 let pitCosts = await getPitCostData({
                     pitLoads,
                     yardLoads,
-                    pit: location,
+                    pitLocation: location,
                     distances,
                     addressInput,
                     totalYardCost: totalCost,
@@ -796,14 +795,11 @@ async function calculateCost() {
                     amountNeeded
                 });
 
-                const shouldUseSplitCombo =
-                    pitResult.splitPitYardCombo && isFinite(pitResult.splitPitYardCombo.totalCost);
-
-                if (!shouldUseSplitCombo && pitCosts.totalCost > 0) {
+                if (pitCosts.totalCost > 0) {
                     console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
                     console.log(pitCosts.logOutput);
                     costResults.push(pitCosts);
-                }              
+                }                
             }
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
