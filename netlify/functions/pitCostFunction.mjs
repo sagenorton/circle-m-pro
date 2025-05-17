@@ -82,27 +82,47 @@ export async function handler(event) {
       };
     }
 
-    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
-
-    const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
-    const adjustedTravelTime = totalDriveTime * 1.15;
-    const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
-
+    // === Group pitLoads by truck type + max ===
+    const groupedByTruck = {};
     for (const load of pitLoads) {
-      const costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
-      const costPerLoad = costPerUnit * load.amount;
+      const key = `${load.truckName}-${load.max}`;
+      if (!groupedByTruck[key]) {
+        groupedByTruck[key] = {
+          truckName: load.truckName,
+          max: load.max,
+          rate: load.rate,
+          loads: []
+        };
+      }
+      groupedByTruck[key].loads.push(load);
+    }
 
-      detailedCosts.push({
-        truckName: load.truckName,
-        rate: load.rate,
-        amount: load.amount,
-        max: load.max,
-        costPerUnit,
-        costPerLoad
-      });
+    // === Process each group independently ===
+    for (const key in groupedByTruck) {
+      const group = groupedByTruck[key];
+      const groupLoads = group.loads;
+      const groupTotalAmount = groupLoads.reduce((sum, l) => sum + l.amount, 0);
+      const tripCount = groupLoads.length;
 
-      totalCost += costPerLoad;
+      const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
+      const adjustedTravelTime = totalDriveTime * 1.15;
+      const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
+
+      for (const load of groupLoads) {
+        const costPerUnit = (((totalJourneyTime / 60) * group.rate) / groupTotalAmount) + (pit.price || 0);
+        const costPerLoad = costPerUnit * load.amount;
+
+        detailedCosts.push({
+          truckName: group.truckName,
+          rate: group.rate,
+          amount: load.amount,
+          max: group.max,
+          costPerUnit,
+          costPerLoad
+        });
+
+        totalCost += costPerLoad;
+      }
     }
 
     // Compute yard cost if overflow
