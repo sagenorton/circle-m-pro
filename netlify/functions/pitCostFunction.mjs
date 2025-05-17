@@ -165,19 +165,22 @@ export async function handler(event) {
     console.log(`  Final Total: $${totalCost.toFixed(2)}`);
     console.log("===================================");
 
-    // Group truck output
+    // Group truck output based on actual costPerUnit stored above
     let groupedTrucks = {};
-    pitLoads.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.rate}`;
+
+    detailedCosts.forEach(load => {
+      const key = `${load.truckName}-${load.amount}-${load.costPerUnit.toFixed(2)}`;
+
       if (!groupedTrucks[key]) {
         groupedTrucks[key] = {
-          count: 0,
-          amount: load.amount,
           truckName: load.truckName,
-          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0)
+          amount: load.amount,
+          costPerUnit: load.costPerUnit,
+          count: 1
         };
+      } else {
+        groupedTrucks[key].count++;
       }
-      groupedTrucks[key].count++;
     });
 
     Object.values(groupedTrucks).forEach(truck => {
