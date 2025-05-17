@@ -73,33 +73,17 @@ export async function handler(event) {
       console.error(`ERROR: Yard location not found in yardLocations for ${finalClosestYard}.`);
       return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
     }
-
-    const driveTimeYardToPit = distances.find(d =>
-      d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
-    )?.duration;
-
-    const driveTimePitToDrop = distances.find(d =>
-      d.from.trim() === pit.address.trim()
-    )?.duration;
-
-    if (!driveTimeYardToPit || !driveTimePitToDrop) {
-      console.error(`ERROR: Missing drive time for ${pit.name}.`);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity })
-      };
-    }
+    
 
     // === Shared Total Journey Time for All Pit Loads ===
+    const totalTrips = pitLoads.length;
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const maxTruckCapacity = pitLoads[0]?.max || 1;
-    const tripCount = Math.ceil(totalLoadAmount / maxTruckCapacity);
 
     const startLeg = driveTimeYardToPit;
-    const repeatLegs = (tripCount - 1) * (driveTimePitToDrop * 2);
+    const repeatLegs = (totalTrips - 1) * (driveTimePitToDrop * 2);
     const finalTrip = driveTimePitToDrop + driveTimeDropToYard;
 
-    const totalJourneyTime = (startLeg + repeatLegs + finalTrip) * 1.15 + (36 * tripCount);
+    const totalJourneyTime = (startLeg + repeatLegs + finalTrip) * 1.15 + (36 * totalTrips);
     const totalTimeInHours = totalJourneyTime / 60;
 
     // === Group by Truck Name + Amount + Max ===
@@ -133,22 +117,14 @@ export async function handler(event) {
 
       totalCost += costPerLoad;
 
-      if (
-        isFinite(costPerUnit) && !isNaN(costPerUnit) &&
-        isFinite(costPerLoad) && !isNaN(costPerLoad)
-      ) {
-        detailedCosts.push({
-          truckName,
-          amount,
-          max,
-          count,
-          costPerUnit: Number(costPerUnit.toFixed(2)),
-          costPerLoad: Number(costPerLoad.toFixed(2))
-        });
-      } else {
-        console.warn(`⚠️ Skipped invalid truck group: ${truckName} - ${amount} @ rate ${rate}`);
-      }
-
+      detailedCosts.push({
+        truckName,
+        amount,
+        max,
+        count,
+        costPerUnit,
+        costPerLoad
+      });
     }
 
     let yardCostData = null;
