@@ -112,14 +112,15 @@ export async function handler(event) {
         continue;
       }
 
-      let costPerUnit =
-        ((totalJourneyTime / 60) * load.rate) / totalLoadAmount + (pit.price || 0);
+      // This truck's personal drive time:
+      const truckTripTime = (
+        driveTimeYardToPit +
+        driveTimePitToDrop +
+        driveTimePitToDrop +
+        driveTimeDropToYard
+      ) * 1.15 + 36;
 
-      if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
-        console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
-        costPerUnit = 0;
-      }
-
+      const costPerUnit = ((truckTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
