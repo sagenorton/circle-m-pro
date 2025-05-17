@@ -1,21 +1,36 @@
 const materialData = require('./materialData.json');
 
 exports.handler = async function (event) {
-  const { material } = event.queryStringParameters;
+  const params = event.queryStringParameters || {};
+  const { material } = params;
 
-  if (!material || !materialData[material]) {
+  // If a specific material is requested
+  if (material) {
+    if (!materialData[material]) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: `Material '${material}' not found.` })
+      };
+    }
+
     return {
-      statusCode: 404,
-      body: JSON.stringify({ error: `Material '${material}' not found.` })
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(materialData[material])
     };
   }
 
+  // If no material is specified, return all material data
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*', // Allow frontend to access
+      'Access-Control-Allow-Origin': '*'
     },
-    body: JSON.stringify(materialData[material])
+    body: JSON.stringify(materialData)
   };
 };
+
