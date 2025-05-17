@@ -92,31 +92,35 @@ export async function handler(event) {
     const adjustedTravelTime = totalDriveTime * 1.15;
     const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
 
-    // Cost calculation for pit loads
-    pitLoads.forEach(load => {
-      if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+    pitLoads.forEach((load, index) => {
+      if (!load.amount || !load.rate) {
         console.error(`ERROR: Invalid pit load found:`, load);
         return;
       }
 
-      // Calculate per-load journey time:
-      const singleTripTime = driveTimeYardToPit + (driveTimePitToDrop * 2) + driveTimeDropToYard;
-      const adjustedTripTime = singleTripTime * 1.15 + 36;
+      // Trip time logic — round trip for all but only last includes final leg back to yard
+      let perTripTime = driveTimeYardToPit + (driveTimePitToDrop * 2);
+      if (index === pitLoads.length - 1) {
+        perTripTime += driveTimeDropToYard;
+      }
 
-      // Calculate costPerUnit based on *that specific truck's journey*
-      let costPerUnit = ((adjustedTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
-      if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
+      const adjustedTripTime = perTripTime * 1.15 + 36;
 
+      const costPerUnit = ((adjustedTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
-        ...load,
+        truckName: load.truckName,
+        rate: load.rate,
+        amount: load.amount,
         costPerUnit,
         costPerLoad
       });
 
       totalCost += costPerLoad;
     });
+
+    totalCost = Number(totalCost.toFixed(2));
 
     // If yardLoads are used (pit+yard case), compute costs via backend
     let yardCostData = null;
@@ -176,12 +180,9 @@ export async function handler(event) {
     console.log(`  Final Total: $${totalCost.toFixed(2)}`);
     console.log("===================================");
 
-    // Group truck output based on actual costPerUnit stored above
     let groupedTrucks = {};
-
     detailedCosts.forEach(load => {
       const key = `${load.truckName}-${load.amount}-${load.costPerUnit.toFixed(2)}`;
-
       if (!groupedTrucks[key]) {
         groupedTrucks[key] = {
           truckName: load.truckName,
@@ -194,11 +195,10 @@ export async function handler(event) {
       }
     });
 
+    console.log("  Truck(s):");
     Object.values(groupedTrucks).forEach(truck => {
       console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
     });
-
-    totalCost = Number(totalCost.toFixed(2));
 
     return {
       statusCode: 200,
