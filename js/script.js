@@ -918,7 +918,7 @@ function displayResults(totalCost, detailedCosts, unit, yardCostData = null) {
         console.log(`Valid truck cost: ${load.truckName} - ${load.amount} tons at $${load.costPerUnit.toFixed(2)} per ton.`);
 
         const truckName = load.truckName;
-        const truckGroupKey = `${load.truckName}-${load.amount}-${load.rate}-${load.max}-${load.costPerUnit.toFixed(2)}`;
+        const truckGroupKey = `${truckName}-${load.amount}-${load.rate}`;
 
         if (!groupedTrucks[truckGroupKey]) {
             groupedTrucks[truckGroupKey] = {
