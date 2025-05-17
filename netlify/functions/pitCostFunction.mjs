@@ -133,14 +133,22 @@ export async function handler(event) {
 
       totalCost += costPerLoad;
 
-      detailedCosts.push({
-        truckName,
-        amount,
-        max,
-        count,
-        costPerUnit,
-        costPerLoad
-      });
+      if (
+        isFinite(costPerUnit) && !isNaN(costPerUnit) &&
+        isFinite(costPerLoad) && !isNaN(costPerLoad)
+      ) {
+        detailedCosts.push({
+          truckName,
+          amount,
+          max,
+          count,
+          costPerUnit: Number(costPerUnit.toFixed(2)),
+          costPerLoad: Number(costPerLoad.toFixed(2))
+        });
+      } else {
+        console.warn(`⚠️ Skipped invalid truck group: ${truckName} - ${amount} @ rate ${rate}`);
+      }
+
     }
 
     let yardCostData = null;
