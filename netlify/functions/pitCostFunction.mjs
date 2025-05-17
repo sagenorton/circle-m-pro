@@ -94,16 +94,29 @@ export async function handler(event) {
 
     // Cost calculation for pit loads
     pitLoads.forEach(load => {
-      if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+      if (
+        !load.amount || isNaN(load.amount) ||
+        !load.rate || isNaN(load.rate)
+      ) {
         console.error(`ERROR: Invalid pit load found:`, load);
         return;
       }
 
-      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
-      if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
+      const rate = load.rate;
+      const basePrice = pit.price || 0;
 
-      let costPerLoad = costPerUnit * load.amount;
-      detailedCosts.push({ ...load, costPerUnit, costPerLoad });
+      const costPerUnit = (((totalJourneyTime / 60) * rate) / totalLoadAmount) + basePrice;
+      const finalCostPerUnit = isFinite(costPerUnit) ? costPerUnit : 0;
+      const costPerLoad = finalCostPerUnit * load.amount;
+
+      detailedCosts.push({
+        truckName: load.truckName,
+        amount: load.amount,
+        rate: rate,  
+        costPerUnit: finalCostPerUnit,
+        costPerLoad
+      });
+
       totalCost += costPerLoad;
     });
 

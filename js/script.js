@@ -796,11 +796,14 @@ async function calculateCost() {
                     amountNeeded
                 });
 
-                if (pitCosts.totalCost > 0) {
+                const shouldUseSplitCombo =
+                    pitResult.splitPitYardCombo && isFinite(pitResult.splitPitYardCombo.totalCost);
+
+                if (!shouldUseSplitCombo && pitCosts.totalCost > 0) {
                     console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
                     console.log(pitCosts.logOutput);
                     costResults.push(pitCosts);
-                }                
+                }              
             }
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
