@@ -11,11 +11,21 @@ export async function handler(event) {
       yardTotalCost = 0,
       materialInfo = {},
       amountNeeded = 0,
-      yardLocations = {},
-    } = JSON.parse(event.body);
+      yardLocations = {}
+    } = JSON.parse(event.body || '{}');
 
-    if (!pitLoads || pitLoads.length === 0 || !pit || !distances || !materialInfo) {
-      throw new Error("Missing required input fields.");
+    // Validate required fields early
+    if (
+      !Array.isArray(pitLoads) || pitLoads.length === 0 ||
+      !pit || typeof pit !== 'object' ||
+      !Array.isArray(distances) || distances.length === 0 ||
+      !materialInfo || typeof materialInfo !== 'object'
+    ) {
+      console.error("❌ ERROR: Missing or invalid input fields.");
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ totalCost: Infinity, error: "Invalid input." })
+      };
     }
 
     const apiKey = process.env.MAPS_API_KEY;
@@ -64,7 +74,6 @@ export async function handler(event) {
       return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
     }
 
-    // ---------------- Journey Duration Calculation ----------------
     const driveTimeYardToPit = distances.find(d =>
       d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
     )?.duration;
@@ -75,29 +84,64 @@ export async function handler(event) {
 
     if (!driveTimeYardToPit || !driveTimePitToDrop) {
       console.error(`ERROR: Missing drive time for ${pit.name}.`);
-      return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ totalCost: Infinity })
+      };
     }
 
-    // ---------------- Cost Calculation ----------------
-    pitLoads.forEach((load, index) => {
-      let baseTime = driveTimeYardToPit + (driveTimePitToDrop * 2);
-      let journeyTime = index === pitLoads.length - 1
-        ? baseTime + driveTimeDropToYard
-        : baseTime;
+    // === Shared Total Journey Time for All Pit Loads ===
+    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
+    const maxTruckCapacity = pitLoads[0]?.max || 1;
+    const tripCount = Math.ceil(totalLoadAmount / maxTruckCapacity);
 
-      const adjustedTime = journeyTime * 1.15 + 36;
-      const timeInHours = adjustedTime / 60;
-      const costPerUnit = (timeInHours * load.rate) / load.amount + (pit.price || 0);
-      const costPerLoad = costPerUnit * load.amount;
+    const startLeg = driveTimeYardToPit;
+    const repeatLegs = (tripCount - 1) * (driveTimePitToDrop * 2);
+    const finalTrip = driveTimePitToDrop + driveTimeDropToYard;
+
+    const totalJourneyTime = (startLeg + repeatLegs + finalTrip) * 1.15 + (36 * tripCount);
+    const totalTimeInHours = totalJourneyTime / 60;
+
+    // === Group by Truck Name + Amount + Max ===
+    const groupedTrucks = {};
+    pitLoads.forEach(load => {
+      const key = `${load.truckName}-${load.amount}-${load.max}`;
+      if (!groupedTrucks[key]) {
+        groupedTrucks[key] = {
+          truckName: load.truckName,
+          amount: load.amount,
+          max: load.max,
+          rate: load.rate,
+          count: 1,
+          totalAmount: load.amount
+        };
+      } else {
+        groupedTrucks[key].count++;
+        groupedTrucks[key].totalAmount += load.amount;
+      }
+    });
+
+    // === Now calculate cost per group ===
+    let totalCost = 0;
+    const detailedCosts = [];
+
+    for (const group of Object.values(groupedTrucks)) {
+      const { truckName, amount, max, rate, totalAmount, count } = group;
+
+      const costPerUnit = (totalTimeInHours * rate) / totalLoadAmount + (pit.price || 0);
+      const costPerLoad = costPerUnit * totalAmount;
+
+      totalCost += costPerLoad;
 
       detailedCosts.push({
-        ...load,
+        truckName,
+        amount,
+        max,
+        count,
         costPerUnit,
         costPerLoad
       });
-
-      totalCost += costPerLoad;
-    });
+    }
 
     let yardCostData = null;
 
@@ -143,7 +187,8 @@ export async function handler(event) {
         location: pit,
         pitLoads,
         yardLoads,
-        yardCostData
+        yardCostData,
+        unit: materialInfo.sold_by || "unit"
       })
     };
 
