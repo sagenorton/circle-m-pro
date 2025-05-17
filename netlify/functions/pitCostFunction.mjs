@@ -86,33 +86,31 @@ export async function handler(event) {
     }
 
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+    const tripCount = pitLoads.length;
 
-    const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
+    const totalDriveTime =
+      driveTimeYardToPit +
+      (driveTimePitToDrop * (tripCount * 2 - 1)) +
+      driveTimeDropToYard;
+
     const adjustedTravelTime = totalDriveTime * 1.15;
     const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
 
-    pitLoads.forEach((load, index) => {
-      if (!load.amount || !load.rate) {
+    pitLoads.forEach(load => {
+      if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
         console.error(`ERROR: Invalid pit load found:`, load);
         return;
       }
 
-      // Trip time logic — round trip for all but only last includes final leg back to yard
-      let perTripTime = driveTimeYardToPit + (driveTimePitToDrop * 2);
-      if (index === pitLoads.length - 1) {
-        perTripTime += driveTimeDropToYard;
-      }
+      let costPerUnit =
+        ((totalJourneyTime / 60) * load.rate) / totalLoadAmount + (pit.price || 0);
 
-      const adjustedTripTime = perTripTime * 1.15 + 36;
+      if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
 
-      const costPerUnit = ((adjustedTripTime / 60) * load.rate) / load.amount + (pit.price || 0);
-      const costPerLoad = costPerUnit * load.amount;
+      let costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
-        truckName: load.truckName,
-        rate: load.rate,
-        amount: load.amount,
+        ...load,
         costPerUnit,
         costPerLoad
       });
