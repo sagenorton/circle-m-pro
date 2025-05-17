@@ -665,7 +665,7 @@ async function assignToYard(remaining, materialInfo, finalClosestYard, distances
 async function getPitCostData({
     pitLoads,
     yardLoads,
-    pitLocation,
+    pit,
     distances,
     addressInput,
     totalYardCost,
@@ -680,7 +680,7 @@ async function getPitCostData({
             body: JSON.stringify({
                 pitLoads,
                 yardLoads,
-                pitLocation,
+                pit,
                 distances,
                 addressInput,
                 totalYardCost,
@@ -694,9 +694,10 @@ async function getPitCostData({
         return await response.json();
     } catch (err) {
         console.error("ERROR during fetch to pitCostFunction:", err);
-        return { totalCost: Infinity, detailedCosts: [], location: pitLocation };
+        return { totalCost: Infinity, detailedCosts: [], location: pit };
     }
 }
+
 
 
 
@@ -786,7 +787,7 @@ async function calculateCost() {
                 let pitCosts = await getPitCostData({
                     pitLoads,
                     yardLoads,
-                    pitLocation: location,
+                    pit: location,
                     distances,
                     addressInput,
                     totalYardCost: totalCost,
