@@ -82,53 +82,32 @@ export async function handler(event) {
       };
     }
 
-    // === Group pitLoads by truck type + max ===
-    const groupedByTruck = {};
+    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
+    const tripCount = pitLoads.length;
+
+    const totalDriveTime =
+      driveTimeYardToPit +
+      driveTimePitToDrop * (tripCount * 2 - 1) +
+      driveTimeDropToYard;
+
+    const adjustedTravelTime = totalDriveTime * 1.15;
+    const totalJourneyTime = adjustedTravelTime + 36 * tripCount;
+
     for (const load of pitLoads) {
-      const key = `${load.truckName}-${load.max}`;
-      if (!groupedByTruck[key]) {
-        groupedByTruck[key] = {
-          truckName: load.truckName,
-          max: load.max,
-          rate: load.rate,
-          loads: []
-        };
-      }
-      groupedByTruck[key].loads.push(load);
-    }
+      const costPerUnit =
+        ((totalJourneyTime / 60) * load.rate) / totalLoadAmount + (pit.price || 0);
+      const costPerLoad = costPerUnit * load.amount;
 
-    for (const key in groupedByTruck) {
-      const group = groupedByTruck[key];
-      const groupLoads = group.loads;
-      const truckMax = group.max;
-      const truckRate = group.rate;
-      const tripCount = groupLoads.length;
+      detailedCosts.push({
+        truckName: load.truckName,
+        rate: load.rate,
+        amount: load.amount,
+        max: load.max,
+        costPerUnit,
+        costPerLoad
+      });
 
-      // Journey time specific to this group’s number of trips
-      const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
-      const adjustedTravelTime = totalDriveTime * 1.15;
-      const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
-
-      const groupTotalAmount = groupLoads.reduce((sum, l) => sum + l.amount, 0);
-
-      for (const load of groupLoads) {
-        const proportion = load.amount / groupTotalAmount;
-        const timeForThisLoad = proportion * totalJourneyTime;
-
-        const costPerUnit = ((timeForThisLoad / 60) * truckRate) / load.amount + (pit.price || 0);
-        const costPerLoad = costPerUnit * load.amount;
-
-        detailedCosts.push({
-          truckName: group.truckName,
-          rate: truckRate,
-          amount: load.amount,
-          max: truckMax,
-          costPerUnit,
-          costPerLoad
-        });
-
-        totalCost += costPerLoad;
-      }
+      totalCost += costPerLoad;
     }
 
     // Compute yard cost if overflow
