@@ -78,21 +78,20 @@ export async function handler(event) {
       return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
     }
 
-    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const totalTrips = pitLoads.length;
-
-    const totalDriveTime = driveTimeYardToPit +
-      (driveTimePitToDrop * (totalTrips - 1) * 2) +
-      driveTimePitToDrop + driveTimeDropToYard;
-
-    const adjustedTravelTime = totalDriveTime * 1.15 + (36 * totalTrips);
-
     // ---------------- Cost Calculation ----------------
     let totalCost = 0;
     const detailedCosts = [];
 
-    pitLoads.forEach(load => {
-      const costPerUnit = ((adjustedTravelTime / 60) * load.rate) / totalLoadAmount + (pit.price || 0);
+    pitLoads.forEach((load, index) => {
+      let journeyTime = driveTimeYardToPit + driveTimePitToDrop * 2;
+
+      // Only the *last truck* returns to the yard
+      if (index === pitLoads.length - 1) {
+        journeyTime += driveTimeDropToYard;
+      }
+
+      const adjustedJourneyTime = journeyTime * 1.15 + 36;
+      const costPerUnit = ((adjustedJourneyTime / 60) * load.rate) / load.amount + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
