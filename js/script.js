@@ -548,7 +548,7 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
             const pitCostData = await getPitCostData({
                 pitLoads: pitLoadsWithoutLast,
                 yardLoads: [],
-                pitLocation: location,
+                pit: location,
                 distances: pitDistances,
                 addressInput,
                 totalYardCost: 0,
