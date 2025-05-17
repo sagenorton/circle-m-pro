@@ -19,7 +19,7 @@ export async function handler(event) {
     }
 
     if (!pitLoads || pitLoads.length === 0) {
-      console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
+      console.error(`ERROR: No valid pit truck loads found for ${pitLocation.name}`);
       return {
         statusCode: 200,
         body: JSON.stringify({ totalCost: Infinity })
@@ -77,11 +77,17 @@ export async function handler(event) {
     let detailedCosts = [];
 
     // Extract drive times from distances
-    const driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
-    const driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
+    const driveTimeYardToPit = distances.find(d =>
+    d.from.includes(pitLocation.closest_yard) || d.to.includes(pitLocation.closest_yard)
+    )?.duration;
+    
+    const driveTimePitToDrop = distances.find(d =>
+      d.from.trim().toLowerCase() === pitLocation.address.trim().toLowerCase() ||
+      d.to.trim().toLowerCase() === pitLocation.address.trim().toLowerCase()
+    )?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop) {
-      console.error(`ERROR: Missing drive time for ${pit.name}.`);
+      console.error(`ERROR: Missing drive time for ${pitLocation.name}.`);
       return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
     }
 
@@ -99,7 +105,7 @@ export async function handler(event) {
         return;
       }
 
-      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0);
       if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
 
       let costPerLoad = costPerUnit * load.amount;
@@ -117,7 +123,7 @@ export async function handler(event) {
         console.error(`ERROR: Could not find assigned yard (${finalClosestYard}) in material locations.`);
         return {
           statusCode: 200,
-          body: JSON.stringify({ totalCost: Infinity, detailedCosts, location: pit, pitLoads, yardLoads })
+          body: JSON.stringify({ totalCost: Infinity, detailedCosts, location: pitLocation, pitLoads, yardLoads })
         };
       }
 
@@ -151,8 +157,8 @@ export async function handler(event) {
     console.log("===================================");
     console.log("Pit Calculations:");
     console.log(`Pit:`);
-    console.log(`  Starting from: ${pit.closest_yard}`);
-    console.log(`  Going to Pit: ${pit.name}, ${pit.address}`);
+    console.log(`  Starting from: ${pitLocation.closest_yard}`);
+    console.log(`  Going to Pit: ${pitLocation.name}, ${pitLocation.address}`);
     console.log(`  Duration/Distance: ${driveTimeYardToPit} min`);
     console.log(`  Drop off at: ${addressInput}`);
     console.log(`  Duration/Distance: ${driveTimePitToDrop} min`);
@@ -161,7 +167,7 @@ export async function handler(event) {
     console.log(`  Duration/Distance: ${driveTimeDropToYard} min`);
     console.log(`  Total Duration: ${totalJourneyTime.toFixed(2)} min`);
     console.log(`  Amount from pit: ${totalLoadAmount} ${materialInfo.sold_by}`);
-    console.log(`  Base Price: $${pit.price}`);
+    console.log(`  Base Price: $${pitLocation.price}`);
     console.log(`  Final Total: $${totalCost.toFixed(2)}`);
     console.log("===================================");
 
@@ -174,7 +180,7 @@ export async function handler(event) {
           count: 0,
           amount: load.amount,
           truckName: load.truckName,
-          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0)
+          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0)
         };
       }
       groupedTrucks[key].count++;
@@ -186,7 +192,7 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ totalCost, detailedCosts, location: pit, pitLoads, yardLoads, yardCostData })
+      body: JSON.stringify({ totalCost, detailedCosts, location: pitLocation, pitLoads, yardLoads, yardCostData })
     };
 
   } catch (err) {
