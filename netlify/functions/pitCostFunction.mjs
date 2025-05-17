@@ -140,20 +140,25 @@ export async function handler(event) {
       totalCost += yardCostData.totalCost || 0;
     }
 
+    // Group trucks
     let groupedTrucks = {};
-
-    detailedCosts.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.costPerUnit.toFixed(2)}`;
-      if (!groupedTrucks[key]) {
-        groupedTrucks[key] = {
-          truckName: load.truckName,
-          amount: load.amount,
-          costPerUnit: load.costPerUnit,
-          count: 1
-        };
-      } else {
-        groupedTrucks[key].count++;
-      }
+    pitLoads.forEach(load => {
+        const truckGroupKey = `${load.truckName}-${load.amount}-${load.rate}`;
+        if (!groupedTrucks[truckGroupKey]) {
+            groupedTrucks[truckGroupKey] = {
+                count: 0,
+                amount: load.amount,
+                costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0),
+                truckName: load.truckName
+            };
+        }
+        groupedTrucks[truckGroupKey].count++;
+    });
+    
+    // Log grouped trucks
+    console.log(`  Truck(s):`);
+    Object.values(groupedTrucks).forEach(truck => {
+        console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
     });
 
     return {
