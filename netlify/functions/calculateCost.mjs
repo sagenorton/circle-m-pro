@@ -8,7 +8,7 @@ export async function handler(event) {
       distances,
       addressInput,
       yardLoads,
-      yardTotalCost,
+      totalYardCost,
       materialInfo,
       yardLocations,
       amountNeeded
@@ -24,7 +24,7 @@ export async function handler(event) {
         distances,
         addressInput,
         yardLoads,
-        yardTotalCost,
+        totalYardCost,
         materialInfo,
         yardLocations,
         amountNeeded
@@ -33,13 +33,23 @@ export async function handler(event) {
 
     const pitResult = await pitResponse.json();
 
+    const closestYardKey = Object.keys(yardLocations).find(key =>
+      pitResult?.location?.closest_yard?.toLowerCase().includes(key.toLowerCase())
+    );
+
+    if (!closestYardKey || !yardLocations[closestYardKey]) {
+      throw new Error(`ERROR: Closest yard '${pitResult?.location?.closest_yard}' not found in yardLocations.`);
+    }
+
+    const yard = yardLocations[closestYardKey];
+
     // Call yard cost function
     const yardResponse = await fetch(`${process.env.URL}/.netlify/functions/yardCostFunction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         truckLoadInfo: yardLoads,
-        yard: yardLocations[pitResult?.location?.closest_yard || "I90 Yard"],
+        yard,
         distances,
         addressInput,
         materialInfo
