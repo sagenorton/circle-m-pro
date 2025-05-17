@@ -83,25 +83,20 @@ export async function handler(event) {
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
     let totalCost = 0;
     let detailedCosts = [];
+    const totalTrips = pitLoads.length;
 
-    // === Per-truck cost calculation (last truck includes return to yard) ===
-    pitLoads.forEach((load, index) => {
-      const isLastTruck = index === pitLoads.length - 1;
-      let journeyTime = driveTimeYardToPit + (driveTimePitToDrop * 2);
-      if (isLastTruck) {
-        journeyTime += driveTimeDropToYard;
-      }
+    const startLeg = driveTimeYardToPit;
+    const repeatLegs = (totalTrips - 1) * (driveTimePitToDrop * 2);
+    const finalTrip = driveTimePitToDrop + driveTimeDropToYard;
 
-      const adjustedTime = journeyTime * 1.15 + 36;
-      const costPerUnit = ((adjustedTime / 60) * load.rate) / load.amount + (pit.price || 0);
+    const totalJourneyTime = (startLeg + repeatLegs + finalTrip) * 1.15 + (36 * totalTrips);
+
+    // Correct cost logic
+    pitLoads.forEach(load => {
+      const costPerUnit = ((totalJourneyTime / 60) * load.rate) / totalLoadAmount + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
-      detailedCosts.push({
-        ...load,
-        costPerUnit,
-        costPerLoad
-      });
-
+      detailedCosts.push({ ...load, costPerUnit, costPerLoad });
       totalCost += costPerLoad;
     });
 
