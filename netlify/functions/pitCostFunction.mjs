@@ -76,44 +76,56 @@ export async function handler(event) {
     let totalCost = 0;
     let detailedCosts = [];
 
-    // Extract drive times from distances
-    const driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
-    const driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
+    // Find the drive times for the journey
+    let driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
+    let driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop) {
-      console.error(`ERROR: Missing drive time for ${pit.name}.`);
-      return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
+        console.error(`ERROR: Missing drive time for ${pit.name}.`);
+        return;
     }
 
+    // Calculate the total load amount and the number of trips needed
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+    let tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
 
-    const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
-    const adjustedTravelTime = totalDriveTime * 1.15;
-    const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
+    // Calculate the total drive time for all trips
+    let totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
 
-    // Cost calculation for pit loads
-    for (const load of pitLoads) {
-      if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
-        console.error(`ERROR: Invalid pit load found:`, load);
-        continue;
-      }
+    // Adjust the travel time with a multiplier
+    let adjustedTravelTime = totalDriveTime * 1.15;
 
-      // Each `load` already represents one truck load
-      const truckTrips = 1;
+    // Calculate the final total journey time including load/unload time
+    let totalJourneyTime = adjustedTravelTime + (36 * tripCount);
 
-      const journeyTime = (
-        driveTimeYardToPit +
-        (driveTimePitToDrop * (truckTrips * 2 - 1)) +
-        driveTimeDropToYard
-      ) * 1.15 + (36 * truckTrips);
+    lastJourneyTime = totalJourneyTime;
 
-      const costPerUnit = (((journeyTime / 60) * load.rate) / load.amount) + (pit.price || 0);
-      const costPerLoad = costPerUnit * load.amount;
+    // Calculate the cost for each pit load
+    pitLoads.forEach(load => {
+        if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+            console.error(`ERROR: Invalid pit load found:`, load);
+            return;
+        }
 
-      detailedCosts.push({ ...load, costPerUnit, costPerLoad });
-      totalCost += costPerLoad;
-    }
+        let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+
+        if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
+            console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
+            costPerUnit = 0;
+        }
+
+        let costPerLoad = costPerUnit * load.amount;
+
+        detailedCosts.push({
+            truckName: load.truckName,
+            rate: load.rate,
+            amount: load.amount,
+            costPerUnit,
+            costPerLoad
+        });
+
+        totalCost += costPerLoad;
+    });  
 
     // If yardLoads are used (pit+yard case), compute costs via backend
     let yardCostData = null;
@@ -175,24 +187,23 @@ export async function handler(event) {
 
     // Group truck output based on actual costPerUnit stored above
     let groupedTrucks = {};
-
-    detailedCosts.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.costPerUnit.toFixed(2)}`;
-
-      if (!groupedTrucks[key]) {
-        groupedTrucks[key] = {
-          truckName: load.truckName,
-          amount: load.amount,
-          costPerUnit: load.costPerUnit,
-          count: 1
-        };
-      } else {
-        groupedTrucks[key].count++;
-      }
+    pitLoads.forEach(load => {
+        const truckGroupKey = `${load.truckName}-${load.amount}-${load.rate}`;
+        if (!groupedTrucks[truckGroupKey]) {
+            groupedTrucks[truckGroupKey] = {
+                count: 0,
+                amount: load.amount,
+                costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0),
+                truckName: load.truckName
+            };
+        }
+        groupedTrucks[truckGroupKey].count++;
     });
-
+    
+    // Log grouped trucks
+    console.log(`  Truck(s):`);
     Object.values(groupedTrucks).forEach(truck => {
-      console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
+        console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
     });
 
     totalCost = Number(totalCost.toFixed(2));
