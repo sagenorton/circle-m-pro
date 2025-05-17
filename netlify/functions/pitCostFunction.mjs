@@ -4,22 +4,21 @@ export async function handler(event) {
   try {
     const {
       pitLoads,
-      pitLocation,
+      pit,
       distances,
       addressInput,
       yardLoads = [],
-      totalYardCost = 0,
       materialInfo = {},
+      amountNeeded,
       yardLocations = {},
-      amountNeeded = 0
     } = JSON.parse(event.body);
 
-    if (!pitLoads || !pitLocation || !distances || !materialInfo) {
+    if (!pitLoads || !pit || !distances || !materialInfo) {
       throw new Error("Missing required input fields.");
     }
 
     if (!pitLoads || pitLoads.length === 0) {
-      console.error(`ERROR: No valid pit truck loads found for ${pitLocation.name}`);
+      console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
       return {
         statusCode: 200,
         body: JSON.stringify({ totalCost: Infinity })
@@ -35,14 +34,15 @@ export async function handler(event) {
         yardName: name
       }));
 
-      const responses = await Promise.all(
-        routes.map(route => {
-          const origin = encodeURIComponent(route.origin);
-          const destination = encodeURIComponent(route.destination);
-          const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${origin}&destinations=${destination}&key=${apiKey}`;
-          return fetch(url).then(res => res.json());
-        })
-      );
+    const responses = await Promise.all(
+      routes.map(async (route) => {
+        const origin = encodeURIComponent(route.origin);
+        const destination = encodeURIComponent(route.destination);
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${origin}&destinations=${destination}&key=${apiKey}`;
+        const res = await fetch(url);
+        return res.json();
+      })
+    );
 
       const distances = responses.map((res, i) => {
         const element = res.rows[0].elements[0];
@@ -77,17 +77,11 @@ export async function handler(event) {
     let detailedCosts = [];
 
     // Extract drive times from distances
-    const driveTimeYardToPit = distances.find(d =>
-    d.from.includes(pitLocation.closest_yard) || d.to.includes(pitLocation.closest_yard)
-    )?.duration;
-    
-    const driveTimePitToDrop = distances.find(d =>
-      d.from.trim().toLowerCase() === pitLocation.address.trim().toLowerCase() ||
-      d.to.trim().toLowerCase() === pitLocation.address.trim().toLowerCase()
-    )?.duration;
+    const driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
+    const driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop) {
-      console.error(`ERROR: Missing drive time for ${pitLocation.name}.`);
+      console.error(`ERROR: Missing drive time for ${pit.name}.`);
       return { statusCode: 200, body: JSON.stringify({ totalCost: Infinity }) };
     }
 
@@ -105,7 +99,7 @@ export async function handler(event) {
         return;
       }
 
-      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0);
+      let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
       if (isNaN(costPerUnit) || !isFinite(costPerUnit)) costPerUnit = 0;
 
       let costPerLoad = costPerUnit * load.amount;
@@ -118,12 +112,12 @@ export async function handler(event) {
     if (yardLoads.length > 0) {
       console.log("Processing overflow yard loads separately...");
 
-      const assignedYard = materialInfo.locations?.find(yard => yard.name === finalClosestYard);
+      const assignedYard = materialInfo.locations.find(yard => yard.name === finalClosestYard);
       if (!assignedYard) {
         console.error(`ERROR: Could not find assigned yard (${finalClosestYard}) in material locations.`);
         return {
           statusCode: 200,
-          body: JSON.stringify({ totalCost: Infinity, detailedCosts, location: pitLocation, pitLoads, yardLoads })
+          body: JSON.stringify({ totalCost: Infinity, detailedCosts, location: pit, pitLoads, yardLoads })
         };
       }
 
@@ -157,8 +151,8 @@ export async function handler(event) {
     console.log("===================================");
     console.log("Pit Calculations:");
     console.log(`Pit:`);
-    console.log(`  Starting from: ${pitLocation.closest_yard}`);
-    console.log(`  Going to Pit: ${pitLocation.name}, ${pitLocation.address}`);
+    console.log(`  Starting from: ${pit.closest_yard}`);
+    console.log(`  Going to Pit: ${pit.name}, ${pit.address}`);
     console.log(`  Duration/Distance: ${driveTimeYardToPit} min`);
     console.log(`  Drop off at: ${addressInput}`);
     console.log(`  Duration/Distance: ${driveTimePitToDrop} min`);
@@ -167,32 +161,37 @@ export async function handler(event) {
     console.log(`  Duration/Distance: ${driveTimeDropToYard} min`);
     console.log(`  Total Duration: ${totalJourneyTime.toFixed(2)} min`);
     console.log(`  Amount from pit: ${totalLoadAmount} ${materialInfo.sold_by}`);
-    console.log(`  Base Price: $${pitLocation.price}`);
+    console.log(`  Base Price: $${pit.price}`);
     console.log(`  Final Total: $${totalCost.toFixed(2)}`);
     console.log("===================================");
 
-    // Group truck output
+    // Group truck output based on actual costPerUnit stored above
     let groupedTrucks = {};
-    pitLoads.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.rate}`;
+
+    detailedCosts.forEach(load => {
+      const key = `${load.truckName}-${load.amount}-${load.costPerUnit.toFixed(2)}`;
+
       if (!groupedTrucks[key]) {
         groupedTrucks[key] = {
-          count: 0,
-          amount: load.amount,
           truckName: load.truckName,
-          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pitLocation.price || 0)
+          amount: load.amount,
+          costPerUnit: load.costPerUnit,
+          count: 1
         };
+      } else {
+        groupedTrucks[key].count++;
       }
-      groupedTrucks[key].count++;
     });
 
     Object.values(groupedTrucks).forEach(truck => {
       console.log(`    - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)} per ${materialInfo.sold_by}`);
     });
 
+    totalCost = Number(totalCost.toFixed(2));
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ totalCost, detailedCosts, location: pitLocation, pitLoads, yardLoads, yardCostData })
+      body: JSON.stringify({ totalCost, detailedCosts, location: pit, pitLoads, yardLoads, yardCostData })
     };
 
   } catch (err) {
