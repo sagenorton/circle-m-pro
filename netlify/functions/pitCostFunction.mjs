@@ -86,7 +86,7 @@ export async function handler(event) {
     }
 
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = pitLoads.length;
+    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
 
     const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
     const adjustedTravelTime = totalDriveTime * 1.15;
@@ -102,13 +102,13 @@ export async function handler(event) {
       // Each `load` already represents one truck load
       const truckTrips = 1;
 
-      const totalJourneyTime = (
+      const journeyTime = (
         driveTimeYardToPit +
         (driveTimePitToDrop * (truckTrips * 2 - 1)) +
         driveTimeDropToYard
       ) * 1.15 + (36 * truckTrips);
 
-      const costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+      const costPerUnit = (((journeyTime / 60) * load.rate) / load.amount) + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({ ...load, costPerUnit, costPerLoad });
