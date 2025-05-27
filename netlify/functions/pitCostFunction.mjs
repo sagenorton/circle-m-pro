@@ -1,160 +1,115 @@
-import fetch from 'node-fetch';
+export async function computePitCosts(
+    pitLoads,
+    pit,
+    distances,
+    addressInput,
+    yardLoads = [],
+    yardTotalCost = 0,
+    materialInfo = {},
+    yardLocations = {},
+    amountNeeded = 0,
+    getClosestYard,
+    calculateDistances,
+    computeYardCosts
+) {
+    // Ensure these values are defined to prevent errors
+    yardTotalCost = yardTotalCost || 0;
+    materialInfo = materialInfo || {};
+    amountNeeded = amountNeeded || 0;
 
-export async function handler(event) {
-  try {
-    const {
-      pitLoads,
-      pit,
-      distances,
-      addressInput,
-      yardLoads = [],
-      yardTotalCost = 0,
-      materialInfo = {},
-      yardLocations = {},
-      amountNeeded = 0
-    } = JSON.parse(event.body || '{}');
+    // Check if there are valid pit truck loads
+    if (!pitLoads || pitLoads.length === 0) {
+        console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
+        return { totalCost: Infinity };
+    }
 
-    let logOutput = "";
+    // Get the closest yard data based on distance (not material availability)
+    const closestYardData = await getClosestYard(addressInput);
+    if (!closestYardData) {
+        console.error("ERROR: Could not determine closest yard.");
+        return { totalCost: Infinity };
+    }
+
+    const finalClosestYard = closestYardData.yardName;
+    let driveTimeDropToYard = closestYardData.duration;
+
+    // Ensure yardLocations is defined before using it
+    if (!yardLocations || !yardLocations[finalClosestYard]) {
+        console.error(`ERROR: Yard location not found in yardLocations for ${finalClosestYard}.`);
+        return { totalCost: Infinity };
+    }
+
     let totalCost = 0;
     let detailedCosts = [];
+
+    // Find the drive times for the journey
+    let driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
+    let driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
+
+    if (!driveTimeYardToPit || !driveTimePitToDrop) {
+        console.error(`ERROR: Missing drive time for ${pit.name}.`);
+        return { totalCost: Infinity };
+    }
+
+    // Calculate the total load amount and the number of trips needed
+    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
+    let tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+
+    // Calculate the total drive time for all trips
+    let totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
+
+    // Adjust the travel time with a multiplier
+    let adjustedTravelTime = totalDriveTime * 1.15;
+
+    // Calculate the final total journey time including load/unload time
+    let totalJourneyTime = adjustedTravelTime + (36 * tripCount);
+
+    // Calculate the cost for each pit load
+    pitLoads.forEach(load => {
+        if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
+            console.error(`ERROR: Invalid pit load found:`, load);
+            return;
+        }
+
+        let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+
+        if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
+            console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
+            costPerUnit = 0;
+        }
+
+        let costPerLoad = costPerUnit * load.amount;
+
+        detailedCosts.push({
+            truckName: load.truckName,
+            rate: load.rate,
+            amount: load.amount,
+            costPerUnit,
+            costPerLoad
+        });
+
+        totalCost += costPerLoad;
+    });
+
     let yardCostData = null;
 
-    if (!pitLoads || pitLoads.length === 0) {
-      console.error(`ERROR: No valid pit truck loads found for ${pit.name}`);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity, logOutput })
-      };
-    }
+    if (yardLoads && yardLoads.length > 0) {
+        // Find the assigned yard
+        let assignedYard = materialInfo.locations.find(yard => yard.name === finalClosestYard);
+        if (!assignedYard) {
+            console.error(`ERROR: Could not find assigned yard (${finalClosestYard}) in material locations.`);
+            return { totalCost: Infinity, detailedCosts: [], location: pit, pitLoads, yardLoads };
+        }
 
-    // Simulated backend version of getClosestYard
-    const closestYardKey = Object.keys(yardLocations).find(key =>
-      addressInput.toLowerCase().includes(key.toLowerCase()) || pit.closest_yard.toLowerCase().includes(key.toLowerCase())
-    );
-    const closestYard = yardLocations[closestYardKey];
+        // Compute distances for yard separately
+        let yardDistances = await calculateDistances([{ origin: assignedYard.address, destination: addressInput }]);
 
-    if (!closestYard) {
-      const msg = "ERROR: Could not determine closest yard.";
-      console.error(msg);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity, logOutput: msg })
-      };
-    }
+        // Ensure correct yard pricing is used
+        yardCostData = await computeYardCosts(yardLoads, assignedYard, yardDistances, addressInput, materialInfo);
 
-    const driveTimeYardToPit = distances.find(d =>
-      d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
-    )?.duration;
-
-    const driveTimePitToDrop = distances.find(d =>
-      d.from.trim() === pit.address.trim()
-    )?.duration;
-
-    const driveTimeDropToYard = distances.find(d =>
-      d.to.includes(closestYard.address) || d.from.includes(closestYard.address)
-    )?.duration;
-
-    if (!driveTimeYardToPit || !driveTimePitToDrop || !driveTimeDropToYard) {
-      const msg = `ERROR: Missing drive time for ${pit.name}.`;
-      console.error(msg);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity, logOutput: msg })
-      };
-    }
-
-    const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
-
-    const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
-    const adjustedTravelTime = totalDriveTime * 1.15;
-    const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
-
-    pitLoads.forEach(load => {
-      if (!load.amount || !load.rate || isNaN(load.amount) || isNaN(load.rate)) {
-        console.error(`ERROR: Invalid pit load:`, load);
-        return;
-      }
-
-      const costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
-      const costPerLoad = costPerUnit * load.amount;
-
-      detailedCosts.push({
-        truckName: load.truckName,
-        rate: load.rate,
-        amount: load.amount,
-        costPerUnit: isFinite(costPerUnit) ? costPerUnit : 0,
-        costPerLoad: isFinite(costPerLoad) ? costPerLoad : 0
-      });
-
-      totalCost += isFinite(costPerLoad) ? costPerLoad : 0;
-    });
-
-    // Process YARD loads via backend if applicable
-    if (yardLoads.length > 0 && closestYard) {
-      const yardResponse = await fetch(`${process.env.URL}/.netlify/functions/yardCostFunction`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          truckLoadInfo: yardLoads,
-          yard: closestYard,
-          distances,
-          addressInput,
-          materialInfo
-        })
-      });
-
-      yardCostData = await yardResponse.json();
-
-      if (isFinite(yardCostData.totalCost)) {
-        detailedCosts = detailedCosts.concat(yardCostData.detailedCosts || []);
+        detailedCosts = detailedCosts.concat(yardCostData.detailedCosts);
         totalCost += yardCostData.totalCost;
-      }
     }
 
-    // Grouped truck logging
-    const groupedTrucks = {};
-    pitLoads.forEach(load => {
-      const key = `${load.truckName}-${load.amount}-${load.rate}`;
-      if (!groupedTrucks[key]) {
-        groupedTrucks[key] = {
-          count: 0,
-          amount: load.amount,
-          costPerUnit: (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0),
-          truckName: load.truckName
-        };
-      }
-      groupedTrucks[key].count++;
-    });
-
-    // Optional: you can strip or return `logOutput` if needed
-    logOutput += "===================================\n";
-    logOutput += `PIT Chosen:\n${pit.name}, ${pit.address}\n`;
-    logOutput += `Truck(s):\n`;
-    Object.values(groupedTrucks).forEach(truck => {
-      logOutput += `  - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)}\n`;
-    });
-    logOutput += `Final Total: $${totalCost.toFixed(2)}\n`;
-    logOutput += "===================================\n";
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        totalCost,
-        detailedCosts,
-        location: pit,
-        pitLoads,
-        yardLoads,
-        yardCostData,
-        logOutput
-      })
-    };
-
-  } catch (error) {
-    console.error("Fatal error in pitCostFunction:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error in pitCostFunction." })
-    };
-  }
+    return { totalCost, detailedCosts, location: pit, pitLoads, yardLoads, yardCostData };
 }
