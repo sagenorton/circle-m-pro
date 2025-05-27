@@ -777,8 +777,9 @@ async function calculateCost() {
             let { pitLoads, yardLoads, totalCost } = pitResult;
 
             if (pitLoads.length > 0) {
+                let yardAddress = yardLocations[location.closest_yard];
                 let distances = await calculateDistances([
-                    { origin: location.closest_yard, destination: location.address },
+                    { origin: yardAddress, destination: location.address },
                     { origin: location.address, destination: addressInput },
                     { origin: addressInput, destination: finalClosestYardLocation.address }
                 ]);

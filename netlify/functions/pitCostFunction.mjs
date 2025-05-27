@@ -34,16 +34,18 @@ export async function handler(event) {
       };
     }
 
+    const yardAddress = closestYard.address || closestYard;
+    
     const driveTimeYardToPit = distances.find(d =>
-      d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
+      d.from === yardAddress && d.to === pit.address
     )?.duration;
-
+    
     const driveTimePitToDrop = distances.find(d =>
-      d.from.trim() === pit.address.trim()
+      d.from === pit.address && d.to === addressInput
     )?.duration;
-
+    
     const driveTimeDropToYard = distances.find(d =>
-      d.to.includes(closestYard.address) || d.from.includes(closestYard.address)
+      d.from === addressInput && d.to === yardAddress
     )?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop || !driveTimeDropToYard) {
