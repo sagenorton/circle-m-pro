@@ -8,10 +8,8 @@ export async function handler(event) {
       distances,
       addressInput,
       yardLoads = [],
-      yardTotalCost = 0,
       materialInfo = {},
-      yardLocations = {},
-      amountNeeded = 0
+      yardLocations = {}
     } = JSON.parse(event.body || '{}');
 
     let logOutput = "";
@@ -64,19 +62,15 @@ export async function handler(event) {
     }
 
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
-    const tripCount = Math.ceil(totalLoadAmount / pitLoads[0].max);
+    
+    pitLoads.forEach((load, index) => {
+      if (!load.amount || !load.rate || isNaN(load.amount) || isNaN(load.rate)) return;
 
-    const totalDriveTime = driveTimeYardToPit + (driveTimePitToDrop * (tripCount * 2 - 1)) + driveTimeDropToYard;
-    const adjustedTravelTime = totalDriveTime * 1.15;
-    const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
+      const isLastTruck = (index === pitLoads.length - 1);
+      const tripTime = driveTimeYardToPit + (driveTimePitToDrop * 2) + (isLastTruck ? driveTimeDropToYard : 0);
+      const adjustedTime = tripTime * 1.15 + 36;
 
-    pitLoads.forEach(load => {
-      if (!load.amount || !load.rate || isNaN(load.amount) || isNaN(load.rate)) {
-        console.error(`ERROR: Invalid pit load:`, load);
-        return;
-      }
-
-      const costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+      const costPerUnit = (((adjustedTime / 60) * load.rate) / load.amount) + (pit.price || 0);
       const costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
