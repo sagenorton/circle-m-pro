@@ -581,7 +581,6 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
     return {
         pitLoads,
         yardLoads,
-        totalCost: yardAssignment ? yardAssignment.totalCost : 0,
         splitPitYardCombo
     };
 }
@@ -796,7 +795,7 @@ async function calculateCost() {
                     amountNeeded
                 });
 
-                if (pitCosts.totalCost > 0) {
+                if (pitCosts && isFinite(pitCosts.totalCost)) {
                     console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
                     console.log(pitCosts.logOutput);
                     costResults.push(pitCosts);
