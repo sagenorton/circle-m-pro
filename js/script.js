@@ -796,10 +796,12 @@ async function calculateCost() {
                 });
 
                 if (pitCosts && isFinite(pitCosts.totalCost)) {
-                    console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
-                    console.log(pitCosts.logOutput);
-                    costResults.push(pitCosts);
-                }                
+                  console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
+                  console.log(pitCosts.logOutput);
+                  costResults.push(pitCosts);
+                } else {
+                  console.warn(`⚠️ PIT result for ${location.name} was invalid or missing totalCost`, pitCosts);
+                }           
             }
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
