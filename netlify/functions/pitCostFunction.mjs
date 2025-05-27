@@ -21,28 +21,29 @@ export async function handler(event) {
       };
     }
 
-    const yardKey = pit.closest_yard;
-    const closestYard = yardLocations[yardKey];
-    
+    const closestYardKey = Object.keys(yardLocations).find(key =>
+      addressInput.toLowerCase().includes(key.toLowerCase()) ||
+      pit.closest_yard.toLowerCase().includes(key.toLowerCase())
+    );
+    const closestYard = yardLocations[closestYardKey];
+
     if (!closestYard) {
       return {
         statusCode: 200,
         body: JSON.stringify({ totalCost: Infinity, logOutput: '❌ Closest yard not found', location: pit })
       };
     }
-    
-    const yardAddress = closestYard.address || closestYard;
-    
+
     const driveTimeYardToPit = distances.find(d =>
-      d.from === yardAddress && d.to === pit.address
+      d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
     )?.duration;
-    
+
     const driveTimePitToDrop = distances.find(d =>
-      d.from === pit.address && d.to === addressInput
+      d.from.trim() === pit.address.trim()
     )?.duration;
-    
+
     const driveTimeDropToYard = distances.find(d =>
-      d.from === addressInput && d.to === yardAddress
+      d.to.includes(closestYard.address) || d.from.includes(closestYard.address)
     )?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop || !driveTimeDropToYard) {
