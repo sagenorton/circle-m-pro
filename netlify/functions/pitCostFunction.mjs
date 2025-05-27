@@ -43,8 +43,17 @@ export async function computePitCosts(
     let detailedCosts = [];
 
     // Find the drive times for the journey
-    let driveTimeYardToPit = distances.find(d => d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard))?.duration;
-    let driveTimePitToDrop = distances.find(d => d.from.trim() === pit.address.trim())?.duration;
+    let driveTimeYardToPit = distances.find(
+        d =>
+            d.from.trim().toLowerCase() === pit.closest_yard.trim().toLowerCase() ||
+            d.to.trim().toLowerCase() === pit.closest_yard.trim().toLowerCase()
+    )?.duration;
+    
+    let driveTimePitToDrop = distances.find(
+        d =>
+            d.from.trim().toLowerCase() === pit.address.trim().toLowerCase() ||
+            d.to.trim().toLowerCase() === pit.address.trim().toLowerCase()
+    )?.duration;
 
     if (!driveTimeYardToPit || !driveTimePitToDrop) {
         console.error(`ERROR: Missing drive time for ${pit.name}.`);
