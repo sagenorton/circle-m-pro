@@ -64,19 +64,19 @@ window.initMap = function () {
 
 
 
-/* --------------------- Material Data and Truck Names -------------------------- */
-let cachedMaterialData = null;
-
-async function fetchMaterialData() {
-    if (cachedMaterialData) return cachedMaterialData;
-
+async function fetchMaterialData(material = null) {
     try {
-        const response = await fetch('/.netlify/functions/getMaterialData');
-        if (!response.ok) throw new Error("Failed to fetch material data");
-        cachedMaterialData = await response.json();
-        return cachedMaterialData;
+        const url = material
+            ? `/.netlify/functions/getMaterialData?material=${encodeURIComponent(material)}`
+            : `/.netlify/functions/getMaterialData`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch material data: ${response.statusText}`);
+        const data = await response.json();
+
+        return data;
     } catch (error) {
-        console.error("ERROR fetching material data:", error);
+        console.error("Error fetching material data:", error);
         return null;
     }
 }
@@ -112,13 +112,7 @@ async function updateUnitRestrictions() {
     const tonsInput = document.getElementById("tonsNeeded");
 
     // Get material info
-    const materialData = await fetchMaterialData();
-    if (!materialData || !materialData[selectedMaterial]) {
-        console.error(`Material info not found for ${selectedMaterial}`);
-        return;
-    }
-    const materialInfo = materialData[selectedMaterial];
-
+    const materialInfo = await fetchMaterialData(materialName);
     if (!materialInfo) {
         console.error(`Material info not found for ${selectedMaterial}`);
         return;
@@ -386,30 +380,16 @@ async function calculateYardTruckLoads(remaining, materialInfo, location) {
 
 
 
+/* --------------------- Core function to calculate costs for Yards -------------------------- */
+async function getYardCostData(payload) {
+  const response = await fetch("/.netlify/functions/yardCostFunction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-/* --------------------- Compute costs for yard loads -------------------------- */
-async function getYardCostData(yardLoads, yardLocation, distances, addressInput, materialInfo, suppressLogs = false) {
-    try {
-        const response = await fetch('/.netlify/functions/yardCostFunction', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                truckLoadInfo: yardLoads,
-                yard: yardLocation,
-                distances,
-                addressInput,
-                materialInfo,
-                suppressLogs
-            })
-        });
-
-        if (!response.ok) throw new Error("Backend yard cost calculation failed.");
-
-        return await response.json();
-    } catch (err) {
-        console.error("ERROR during fetch to yardCostFunction:", err);
-        return { totalCost: Infinity, detailedCosts: [], location: yardLocation };
-    }
+  if (!response.ok) throw new Error("Failed to fetch yard cost data");
+  return await response.json();
 }
 
 
@@ -545,17 +525,17 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
                 { origin: addressInput, destination: yardLocations[finalClosestYard] }
             ]);
 
-            const pitCostData = await getPitCostData({
-                pitLoads: pitLoadsWithoutLast,
-                yardLoads: [],
-                pit: location,
-                distances: pitDistances,
+            const pitCostData = await computePitCosts(
+                pitLoadsWithoutLast,
+                location,
+                pitDistances,
                 addressInput,
-                totalYardCost: 0,
+                [], // no yardLoads for this PIT portion
+                0,
                 materialInfo,
                 yardLocations,
-                amountNeeded: totalPitAmountWithoutLast
-            });
+                totalPitAmountWithoutLast
+            );
 
             // Merge outputs for accurate display and breakdown
             splitPitYardCombo = {
@@ -581,6 +561,7 @@ async function calculatePitTruckLoads(amountNeeded, materialInfo, location, fina
     return {
         pitLoads,
         yardLoads,
+        totalCost: yardAssignment ? yardAssignment.totalCost : 0,
         splitPitYardCombo
     };
 }
@@ -639,13 +620,13 @@ async function assignToYard(remaining, materialInfo, finalClosestYard, distances
     let yardResult = await calculateYardTruckLoads(remaining, materialInfo, yardLocation);
 
     // Compute costs for the assigned yard, passing suppressLogs flag
-    let yardCostData = await getYardCostData(
+    let yardCostData = await computeYardCosts(
         yardResult.yardLoads,
         yardLocation,
         distances,
         addressInput,
         materialInfo,
-        suppressLogs
+        suppressLogs // Pass suppressLogs to suppress assigned yard logs
     );
 
     return {
@@ -660,43 +641,19 @@ async function assignToYard(remaining, materialInfo, finalClosestYard, distances
 
 
 
-/* --------------------- Compute costs for pit loads -------------------------- */
-async function getPitCostData({
-    pitLoads,
-    yardLoads,
-    pit,
-    distances,
-    addressInput,
-    totalYardCost,
-    materialInfo,
-    yardLocations,
-    amountNeeded
-}) {
-    try {
-        const response = await fetch('/.netlify/functions/pitCostFunction', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pitLoads,
-                yardLoads,
-                pit,
-                distances,
-                addressInput,
-                totalYardCost,
-                materialInfo,
-                yardLocations,
-                amountNeeded
-            })
-        });
 
-        if (!response.ok) throw new Error("Backend pit cost calculation failed.");
-        return await response.json();
-    } catch (err) {
-        console.error("ERROR during fetch to pitCostFunction:", err);
-        return { totalCost: Infinity, detailedCosts: [], location: pit };
-    }
+
+/* --------------------- Core function to compute costs for Pits -------------------------- */
+async function getPitCostData(payload) {
+  const response = await fetch("/.netlify/functions/pitCostFunction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch pit cost data");
+  return await response.json();
 }
-
 
 
 
@@ -709,14 +666,7 @@ async function calculateCost() {
     const addressInput = document.getElementById('address').value;
     const selectedMaterial = document.getElementById('material').value;
     const amountNeeded = parseFloat(document.getElementById('tonsNeeded').value);
-    const materialData = await fetchMaterialData();
-
-    if (!materialData || !materialData[selectedMaterial]) {
-        console.error(`Material info not found for ${selectedMaterial}`);
-        return;
-    }
-    const materialInfo = materialData[selectedMaterial];
-
+    const materialInfo = await fetchMaterialData(selectedMaterial);
     const unit = materialInfo?.sold_by || 'unit';
 
     // Validate user input
@@ -770,43 +720,47 @@ async function calculateCost() {
         if (isYard) {
             let { yardLoads } = await calculateYardTruckLoads(amountNeeded, materialInfo, location);
             let distances = await calculateDistances([{ origin: location.address, destination: addressInput }]);
-            let yardCosts = await getYardCostData(yardLoads, location, distances, addressInput, materialInfo);
+            let yardCosts = await getYardCostData({
+                                    truckLoadInfo: yardLoads,
+                                    yard: location,
+                                    distances,
+                                    addressInput,
+                                    materialInfo,
+                                    suppressLogs
+                                    });
             costResults.push(yardCosts);
         } else {
             let pitResult = await calculatePitTruckLoads(amountNeeded, materialInfo, location, finalClosestYard, [], addressInput);
             let { pitLoads, yardLoads, totalCost } = pitResult;
 
             if (pitLoads.length > 0) {
-                let yardAddress = yardLocations[location.closest_yard];
                 let distances = await calculateDistances([
-                    { origin: yardAddress, destination: location.address },
+                    { origin: location.closest_yard, destination: location.address },
                     { origin: location.address, destination: addressInput },
                     { origin: addressInput, destination: finalClosestYardLocation.address }
                 ]);
 
                 let pitCosts = await getPitCostData({
-                    pitLoads,
-                    yardLoads,
-                    pit: location,
-                    distances,
-                    addressInput,
-                    totalYardCost: totalCost,
-                    materialInfo,
-                    yardLocations,
-                    amountNeeded
-                });
-
-                if (
-                    pitCosts &&
-                    typeof pitCosts.totalCost === "number" &&
-                    isFinite(pitCosts.totalCost)
-                ) {
+                                            pitLoads,
+                                            pit: {
+                                                ...location,
+                                                closest_yard_name: closestYardData.yardName,
+                                                closest_yard_duration: closestYardData.duration
+                                            },
+                                            distances,
+                                            addressInput,
+                                            yardLoads,
+                                            yardTotalCost: yardCostData?.totalCost || 0,
+                                            materialInfo,
+                                            yardLocations,
+                                            amountNeeded,
+                                            yardCostDataFromBackend: yardCostData
+                                            });
+                if (pitCosts.totalCost > 0) {
                     console.log(`PIT OPTION: ${location.name}, Total Cost: $${pitCosts.totalCost.toFixed(2)}`);
                     console.log(pitCosts.logOutput);
                     costResults.push(pitCosts);
-                } else {
-                    console.warn(`⚠️ PIT result for ${location.name} was invalid or missing totalCost`, pitCosts);
-                }       
+                }                
             }
 
             // Inject PIT+YARD Split Combo from pitResult if it exists
@@ -848,7 +802,7 @@ async function calculateCost() {
             const bComboLoads = [firstLoad, secondLoad];
     
             let distances = await calculateDistances([{ origin: location.address, destination: addressInput }]);
-            const yardCost = await getYardCostData(bComboLoads, location, distances, addressInput, materialInfo);
+            const yardCost = await computeYardCosts(bComboLoads, location, distances, addressInput, materialInfo);
     
             if (yardCost.totalCost && isFinite(yardCost.totalCost)) {
                 yardCost.label = "B+B Combo"; // optional for display clarity
@@ -975,13 +929,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGoogleMapsApi();
 
     // Store original material locations for resetting
-    let originalMaterialLocations = {};
-
-    fetchMaterialData().then(data => {
-        if (data) {
-            originalMaterialLocations = JSON.parse(JSON.stringify(data));
-        }
-    });
+    const originalMaterialLocations = JSON.parse(JSON.stringify(materialData));
 
     // Setup event listener for changes in the selected material
     const materialSelect = document.getElementById("material");
@@ -990,11 +938,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
     const helperText = document.getElementById("tons-help");
-
-    tonsInput.addEventListener("input", async function () {
+    tonsInput.addEventListener("input", function () {
         const selectedMaterial = document.getElementById("material").value;
-        const materialData = await fetchMaterialData();
-        const materialInfo = materialData?.[selectedMaterial];
+        const materialInfo = materialData[selectedMaterial];
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
@@ -1009,15 +955,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Add event listener for form submission to prevent the default form behavior and refresh functions
     const form = document.getElementById("calcForm");
-    form.addEventListener("submit", async function (event) {
+    form.addEventListener("submit", function (event) {
         event.preventDefault();
 
-        const materialData = await fetchMaterialData();
-        if (!materialData) {
-            console.error("ERROR: Unable to fetch material data for reset.");
-            return;
-        }
-
+        // Reset materialInfo.locations to the original state before filtering pits/yards
         Object.keys(materialData).forEach(key => {
             materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
         });

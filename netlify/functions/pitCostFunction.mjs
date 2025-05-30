@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export async function handler(event) {
   try {
     const {
@@ -11,28 +9,24 @@ export async function handler(event) {
       yardTotalCost = 0,
       materialInfo = {},
       yardLocations = {},
-      amountNeeded = 0
-    } = JSON.parse(event.body || '{}');
+      amountNeeded = 0,
+      yardCostDataFromBackend = null // injected externally
+    } = JSON.parse(event.body);
 
     if (!pitLoads || pitLoads.length === 0) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity, logOutput: '❌ pitLoads missing or empty', location: pit })
-      };
+      return jsonResponse({ totalCost: Infinity });
     }
 
-    const closestYardKey = Object.keys(yardLocations).find(key =>
-      addressInput.toLowerCase().includes(key.toLowerCase()) ||
-      pit.closest_yard.toLowerCase().includes(key.toLowerCase())
-    );
-    const closestYard = yardLocations[closestYardKey];
+    // Extract closest yard info — should be pre-fetched
+    const finalClosestYard = pit.closest_yard_name;
+    const driveTimeDropToYard = pit.closest_yard_duration;
 
-    if (!closestYard) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ totalCost: Infinity, logOutput: '❌ Closest yard not found', location: pit })
-      };
+    if (!yardLocations[finalClosestYard]) {
+      return jsonResponse({ totalCost: Infinity });
     }
+
+    let totalCost = 0;
+    let detailedCosts = [];
 
     const driveTimeYardToPit = distances.find(d =>
       d.from.includes(pit.closest_yard) || d.to.includes(pit.closest_yard)
@@ -42,19 +36,8 @@ export async function handler(event) {
       d.from.trim() === pit.address.trim()
     )?.duration;
 
-    const driveTimeDropToYard = distances.find(d =>
-      d.to.includes(closestYard.address) || d.from.includes(closestYard.address)
-    )?.duration;
-
-    if (!driveTimeYardToPit || !driveTimePitToDrop || !driveTimeDropToYard) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          totalCost: Infinity,
-          logOutput: `❌ Missing drive times: Y→P=${driveTimeYardToPit}, P→D=${driveTimePitToDrop}, D→Y=${driveTimeDropToYard}`,
-          location: pit
-        })
-      };
+    if (!driveTimeYardToPit || !driveTimePitToDrop) {
+      return jsonResponse({ totalCost: Infinity });
     }
 
     const totalLoadAmount = pitLoads.reduce((sum, load) => sum + load.amount, 0);
@@ -64,15 +47,13 @@ export async function handler(event) {
     const adjustedTravelTime = totalDriveTime * 1.15;
     const totalJourneyTime = adjustedTravelTime + (36 * tripCount);
 
-    let totalCost = 0;
-    let detailedCosts = [];
-
+    // Cost per load
     pitLoads.forEach(load => {
-      if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
-        return;
-      }
+      if (!load.amount || !load.rate) return;
 
       let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+      if (!isFinite(costPerUnit)) costPerUnit = 0;
+
       let costPerLoad = costPerUnit * load.amount;
 
       detailedCosts.push({
@@ -86,33 +67,13 @@ export async function handler(event) {
       totalCost += costPerLoad;
     });
 
-    let yardCostData = null;
-
-    if (yardLoads.length > 0 && closestYard) {
-      const yardResponse = await fetch(`${process.env.URL}/.netlify/functions/yardCostFunction`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          truckLoadInfo: yardLoads,
-          yard: closestYard,
-          distances,
-          addressInput,
-          materialInfo
-        })
-      });
-
-      yardCostData = await yardResponse.json();
-
-      if (yardCostData && isFinite(yardCostData.totalCost)) {
-        detailedCosts = detailedCosts.concat(yardCostData.detailedCosts || []);
-        totalCost += yardCostData.totalCost;
-      }
+    // Add fallback yard logic if any
+    if (yardLoads.length > 0 && yardCostDataFromBackend) {
+      detailedCosts = detailedCosts.concat(yardCostDataFromBackend.detailedCosts);
+      totalCost += yardCostDataFromBackend.totalCost;
     }
 
-    let logOutput = "===================================\n";
-    logOutput += `PIT Chosen:\n${pit.name}, ${pit.address}\n`;
-    logOutput += `Truck(s):\n`;
-
+    // Grouped trucks for log-style reporting
     const groupedTrucks = {};
     pitLoads.forEach(load => {
       const key = `${load.truckName}-${load.amount}-${load.rate}`;
@@ -127,30 +88,30 @@ export async function handler(event) {
       groupedTrucks[key].count++;
     });
 
-    Object.values(groupedTrucks).forEach(truck => {
-      logOutput += `  - ${truck.count} ${truck.truckName}(s) of ${truck.amount} ${materialInfo.sold_by}s at $${truck.costPerUnit.toFixed(2)}\n`;
+    return jsonResponse({
+      totalCost,
+      detailedCosts,
+      location: pit,
+      pitLoads,
+      yardLoads,
+      yardCostData: yardCostDataFromBackend,
+      groupedTrucks,
+      totalJourneyTime,
+      finalClosestYard
     });
 
-    logOutput += `Final Total: $${totalCost.toFixed(2)}\n`;
-    logOutput += "===================================\n";
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        totalCost,
-        detailedCosts,
-        location: pit,
-        pitLoads,
-        yardLoads,
-        yardCostData,
-        logOutput
-      })
-    };
-  } catch (error) {
-    console.error("Fatal error in pitCostFunction:", error);
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error in pitCostFunction." })
+      body: JSON.stringify({ error: "Internal Server Error", message: err.message })
     };
   }
+}
+
+function jsonResponse(data) {
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    body: JSON.stringify(data)
+  };
 }
