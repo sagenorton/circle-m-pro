@@ -2057,8 +2057,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-
-        if (value < min) {
+    
+        // Only show error if the input is not empty and less than min
+        if (this.value !== "" && value < min) {
             helperText.style.display = "block";
             helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
         } else {
