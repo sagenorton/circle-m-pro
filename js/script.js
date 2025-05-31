@@ -2026,70 +2026,60 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGoogleMapsApi();
 
     const originalMaterialLocations = JSON.parse(JSON.stringify(materialData));
-
-    const form = document.getElementById("calcForm");
     const materialSelect = document.getElementById("material");
     const tonsInput = document.getElementById("tonsNeeded");
-    const helperText = document.getElementById("tons-help");
-    const semiCheckbox = document.getElementById("allowSemi");
     const addressInput = document.getElementById("address");
+    const allowSemiCheckbox = document.getElementById("allowSemi");
+    const helperText = document.getElementById("tons-help");
+    const form = document.getElementById("calcForm");
 
-    // Validate and show helper text for tons input
-    if (tonsInput && helperText) {
-        tonsInput.addEventListener("input", function () {
-            const selectedMaterial = materialSelect.value;
-            const materialInfo = materialData[selectedMaterial];
-            const unit = materialInfo?.sold_by || "unit";
-            const min = parseInt(this.min);
-            const value = parseFloat(this.value);
-
-            if (value < min) {
-                helperText.style.display = "block";
-                helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
-            } else {
-                helperText.style.display = "none";
-            }
-        });
-    }
-
-    // Trigger cost calculation whenever core inputs change
-    const routeTriggerInputs = [
-        "material",
-        "tonsNeeded",
-        "address",
-        "allowSemi"
-    ];
-
-    routeTriggerInputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener("change", () => {
-                const tons = parseFloat(tonsInput?.value || 0);
-                const address = addressInput?.value || "";
-
-                // Prevent calculation if missing address or tons
-                if (address && !isNaN(tons) && tons > 0) {
-                    // Reset materialData to original before filtering
-                    Object.keys(materialData).forEach(key => {
-                        materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
-                    });
-
-                    calculateCost();
-                }
-            });
-        }
-    });
-
-    // Fallback form submit trigger
-    if (form) {
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-
+    // Debounce helper to avoid excessive calls
+    let debounceTimer;
+    function debounceCalculate() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            // Reset materialInfo.locations to the original state before filtering pits/yards
             Object.keys(materialData).forEach(key => {
                 materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
             });
-
             calculateCost();
-        });
+        }, 250); // adjust delay as needed
     }
+
+    materialSelect.addEventListener("change", () => {
+        updateUnitRestrictions();
+        debounceCalculate();
+    });
+
+    tonsInput.addEventListener("input", function () {
+        const selectedMaterial = materialSelect.value;
+        const materialInfo = materialData[selectedMaterial];
+        const unit = materialInfo?.sold_by || 'unit';
+        const min = parseInt(this.min);
+        const value = parseFloat(this.value);
+
+        if (value < min) {
+            helperText.style.display = "block";
+            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
+        } else {
+            helperText.style.display = "none";
+        }
+        debounceCalculate();
+    });
+
+    if (addressInput) {
+        addressInput.addEventListener("input", debounceCalculate);
+    }
+    if (allowSemiCheckbox) {
+        allowSemiCheckbox.addEventListener("change", debounceCalculate);
+    }
+
+    // Keep manual submit for accessibility
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        Object.keys(materialData).forEach(key => {
+            materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
+        });
+        calculateCost();
+    });
 });
