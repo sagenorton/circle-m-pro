@@ -2023,46 +2023,73 @@ function displayResults(totalCost, detailedCosts, unit, yardCostData = null) {
 /* --------------------- Event Listeners -------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
     updateUnitRestrictions();
-
-    // Load the Google Maps API
     loadGoogleMapsApi();
 
-    // Store original material locations for resetting
     const originalMaterialLocations = JSON.parse(JSON.stringify(materialData));
 
-    // Setup event listener for changes in the selected material
+    const form = document.getElementById("calcForm");
     const materialSelect = document.getElementById("material");
-    materialSelect.addEventListener("change", updateUnitRestrictions);
-
-    // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
     const helperText = document.getElementById("tons-help");
-    tonsInput.addEventListener("input", function () {
-        const selectedMaterial = document.getElementById("material").value;
-        const materialInfo = materialData[selectedMaterial];
-        const unit = materialInfo?.sold_by || 'unit';
-        const min = parseInt(this.min);
-        const value = parseFloat(this.value);
+    const semiCheckbox = document.getElementById("allowSemi");
+    const addressInput = document.getElementById("address");
 
-        if (value < min) {
-            helperText.style.display = "block";
-            helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
-        } else {
-            helperText.style.display = "none";
+    // Validate and show helper text for tons input
+    if (tonsInput && helperText) {
+        tonsInput.addEventListener("input", function () {
+            const selectedMaterial = materialSelect.value;
+            const materialInfo = materialData[selectedMaterial];
+            const unit = materialInfo?.sold_by || "unit";
+            const min = parseInt(this.min);
+            const value = parseFloat(this.value);
+
+            if (value < min) {
+                helperText.style.display = "block";
+                helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
+            } else {
+                helperText.style.display = "none";
+            }
+        });
+    }
+
+    // Trigger cost calculation whenever core inputs change
+    const routeTriggerInputs = [
+        "material",
+        "tonsNeeded",
+        "address",
+        "allowSemi"
+    ];
+
+    routeTriggerInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("change", () => {
+                const tons = parseFloat(tonsInput?.value || 0);
+                const address = addressInput?.value || "";
+
+                // Prevent calculation if missing address or tons
+                if (address && !isNaN(tons) && tons > 0) {
+                    // Reset materialData to original before filtering
+                    Object.keys(materialData).forEach(key => {
+                        materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
+                    });
+
+                    calculateCost();
+                }
+            });
         }
     });
 
-    // Add event listener for form submission to prevent the default form behavior and refresh functions
-    const form = document.getElementById("calcForm");
-    form.addEventListener("submit", function (event) {
-        event.preventDefault();
+    // Fallback form submit trigger
+    if (form) {
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
 
-        // Reset materialInfo.locations to the original state before filtering pits/yards
-        Object.keys(materialData).forEach(key => {
-            materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
+            Object.keys(materialData).forEach(key => {
+                materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
+            });
+
+            calculateCost();
         });
-
-        // Call the cost calculation function
-        calculateCost();
-    });
+    }
 });
