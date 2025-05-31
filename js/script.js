@@ -957,6 +957,19 @@ function updateUnitRestrictions() {
     tonsInput.min = minCapacity;
 
     tonsInput.placeholder = `Enter amount needed in ${unit}s`;
+
+    const semiOptionDiv = document.getElementById("semiTruckOption");
+    const allowSemiCheckbox = document.getElementById("allowSemi");
+
+    // Check if any location for the selected material supports truck_D (semi)
+    const hasSemi = materialInfo.locations.some(loc => loc.trucks.includes("truck_D"));
+
+    if (hasSemi) {
+        semiOptionDiv.style.display = "block";
+    } else {
+        semiOptionDiv.style.display = "none";
+        allowSemiCheckbox.checked = true; // Default to allow if not shown
+    }
 }
 
 
