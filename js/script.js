@@ -1000,10 +1000,16 @@ function validateInput(tonsNeeded, dropOffAddress) {
 
     // Validate tons/yards needed
     const min = parseInt(tonsField.min);
-    if (isNaN(tonsNeeded) || tonsNeeded < min ) {
+    // Only show error if the field is not empty and is a number
+    if (tonsField.value !== "" && (isNaN(tonsNeeded) || tonsNeeded < min)) {
         tonsField.style.border = "2px solid red";
         tonsHelper.style.display = "block";
         tonsHelper.textContent = `Please enter a value of ${min} or more.`;
+        return false;
+    }
+
+    // If the field is empty, don't show error, just don't proceed
+    if (tonsField.value === "") {
         return false;
     }
 
@@ -2057,9 +2063,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-    
-        // Only show error if the input is not empty and less than min
-        if (this.value !== "" && value < min) {
+
+        // Only show error if the input is not empty, is a number, and less than min
+        if (this.value !== "" && !isNaN(value) && value < min) {
             helperText.style.display = "block";
             helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
         } else {
