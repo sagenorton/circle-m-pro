@@ -1826,10 +1826,12 @@ async function calculateCost() {
     }
 
     const allowSemi = document.getElementById("allowSemi")?.checked ?? true;
+
     if (!allowSemi) {
-        materialInfo.locations = materialInfo.locations.filter(loc =>
-            loc.name !== "Idaho Forest Group PIT"
-        );
+        materialInfo.locations = materialInfo.locations.filter(loc => {
+            // Keep if it has any truck type other than truck_D
+            return loc.trucks.some(truck => truck !== "truck_D");
+        });
     }
 
     // Iterate through each location to calculate costs
