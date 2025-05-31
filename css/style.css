@@ -121,7 +121,12 @@ form button {
 
 form button:hover {
     background-color: #45a049;
-    transform: scale(1.03); /* Add slight scaling effect */
+    transform: scale(1.03);
+}
+
+#semiTruckOption label {
+  display: inline;
+  width: auto;
 }
 
 #totalCost {
