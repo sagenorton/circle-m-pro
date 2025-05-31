@@ -957,19 +957,6 @@ function updateUnitRestrictions() {
     tonsInput.min = minCapacity;
 
     tonsInput.placeholder = `Enter amount needed in ${unit}s`;
-
-    const semiOptionDiv = document.getElementById("semiTruckOption");
-    const allowSemiCheckbox = document.getElementById("allowSemi");
-
-    // Check if any location for the selected material supports truck_D (semi)
-    const hasSemi = materialInfo.locations.some(loc => loc.trucks.includes("truck_D"));
-
-    if (hasSemi) {
-        semiOptionDiv.style.display = "block";
-    } else {
-        semiOptionDiv.style.display = "none";
-        allowSemiCheckbox.checked = true; // Default to allow if not shown
-    }
 }
 
 
@@ -1826,13 +1813,11 @@ async function calculateCost() {
     }
 
     const allowSemi = document.getElementById("allowSemi")?.checked ?? true;
-
-    // Filter out semi trucks if checkbox is unchecked
-    materialInfo.locations.forEach(location => {
-        if (!allowSemi) {
-            location.trucks = location.trucks.filter(truck => truck !== "truck_D");
-        }
-    });
+    if (!allowSemi) {
+        materialInfo.locations = materialInfo.locations.filter(loc =>
+            loc.name !== "Idaho Forest Group PIT"
+        );
+    }
 
     // Iterate through each location to calculate costs
     for (let location of materialInfo.locations) {
