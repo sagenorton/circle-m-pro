@@ -86,8 +86,8 @@
                         <option value="34_114_basalt_chips" data-unit="ton">3/4" & 1 1/4" Basalt Chips</option>
                         <option value="58_2_2_to_6_riverbed_mix" data-unit="ton">5/8" & 2" & 2 to 6" Riverbed Mix</option>
                         <option value="autumn_gold" data-unit="ton">Autumn Gold: Lane Mt</option>
-                        <option value="black_lava_rock" data-unit="ton">Black Lava Rock</option>
-                        <option value="red_lava_rock" data-unit="ton">Red Lava Rock</option>
+                        <option value="black_lava_rock" data-unit="yard">Black Lava Rock</option>
+                        <option value="red_lava_rock" data-unit="yard">Red Lava Rock</option>
                     </optgroup>
                     <optgroup label="Bark Products">
                         <option value="aged_dark_fines" data-unit="yard">Aged Dark Fines</option>
@@ -126,6 +126,10 @@
                     aria-describedby="tons-help" 
                     required>
                     <span id="tons-help" class="help-text" aria-live="polite" style="display: none;"></span>
+            </div>
+            <div class="form-group" id="semiTruckOption" style="display: none;">
+                <input type="checkbox" id="allowSemi" name="allowSemi" checked>
+                <label for="allowSemi">Allow Semi Truck</label>
             </div>
             <div class="form-group">
                 <button type="submit">Calculate Cost</button>

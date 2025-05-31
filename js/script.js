@@ -644,7 +644,7 @@ const materialData = {
         ]
     },
     "black_lava_rock": {
-        "sold_by": "ton",
+        "sold_by": "yard",
         "locations": [
             { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 124.50, "trucks": ["truck_A", "truck_B", "truck_C"] },
             { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 124.50, "trucks": ["truck_A", "truck_B", "truck_C"] }
@@ -660,7 +660,7 @@ const materialData = {
         ]
     },
     "red_lava_rock": {
-        "sold_by": "ton",
+        "sold_by": "yard",
         "locations": [
             { "name": "I90 Yard", "address": "1820 N University Rd, Spokane Valley, WA 99206", "price": 107.00, "trucks": ["truck_A", "truck_B", "truck_C"] },
             { "name": "Hawthorne Yard", "address": "1208 E Hawthorne Rd, Spokane, WA 99217", "price": 107.00, "trucks": ["truck_A", "truck_B", "truck_C"] }
@@ -957,6 +957,19 @@ function updateUnitRestrictions() {
     tonsInput.min = minCapacity;
 
     tonsInput.placeholder = `Enter amount needed in ${unit}s`;
+
+    const semiOptionDiv = document.getElementById("semiTruckOption");
+    const allowSemiCheckbox = document.getElementById("allowSemi");
+
+    // Check if any location for the selected material supports truck_D (semi)
+    const hasSemi = materialInfo.locations.some(loc => loc.trucks.includes("truck_D"));
+
+    if (hasSemi) {
+        semiOptionDiv.style.display = "block";
+    } else {
+        semiOptionDiv.style.display = "none";
+        allowSemiCheckbox.checked = true; // Default to allow if not shown
+    }
 }
 
 
@@ -1811,6 +1824,15 @@ async function calculateCost() {
         console.log(`User input (${amountNeeded} tons) is below all pit minimums (${minPitCapacity} tons). Skipping pits.`);
         materialInfo.locations = materialInfo.locations.filter(loc => loc.name.toLowerCase().includes("yard"));
     }
+
+    const allowSemi = document.getElementById("allowSemi")?.checked ?? true;
+
+    // Filter out semi trucks if checkbox is unchecked
+    materialInfo.locations.forEach(location => {
+        if (!allowSemi) {
+            location.trucks = location.trucks.filter(truck => truck !== "truck_D");
+        }
+    });
 
     // Iterate through each location to calculate costs
     for (let location of materialInfo.locations) {
