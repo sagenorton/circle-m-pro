@@ -2063,7 +2063,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-
+    
         // Only show error if the input is not empty, is a number, and less than min
         if (this.value !== "" && !isNaN(value) && value < min) {
             helperText.style.display = "block";
