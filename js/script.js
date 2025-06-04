@@ -1000,16 +1000,10 @@ function validateInput(tonsNeeded, dropOffAddress) {
 
     // Validate tons/yards needed
     const min = parseInt(tonsField.min);
-    // Only show error if the field is not empty and is a number
-    if (tonsField.value !== "" && (isNaN(tonsNeeded) || tonsNeeded < min)) {
+    if (isNaN(tonsNeeded) || tonsNeeded < min ) {
         tonsField.style.border = "2px solid red";
         tonsHelper.style.display = "block";
         tonsHelper.textContent = `Please enter a value of ${min} or more.`;
-        return false;
-    }
-
-    // If the field is empty, don't show error, just don't proceed
-    if (tonsField.value === "") {
         return false;
     }
 
@@ -1833,12 +1827,12 @@ async function calculateCost() {
 
     const allowSemi = document.getElementById("allowSemi")?.checked ?? true;
 
-    if (!allowSemi) {
-        materialInfo.locations = materialInfo.locations.filter(loc => {
-            // Keep if it has any truck type other than truck_D
-            return loc.trucks.some(truck => truck !== "truck_D");
-        });
-    }
+    // Filter out semi trucks if checkbox is unchecked
+    materialInfo.locations.forEach(location => {
+        if (!allowSemi) {
+            location.trucks = location.trucks.filter(truck => truck !== "truck_D");
+        }
+    });
 
     // Iterate through each location to calculate costs
     for (let location of materialInfo.locations) {
@@ -2029,64 +2023,46 @@ function displayResults(totalCost, detailedCosts, unit, yardCostData = null) {
 /* --------------------- Event Listeners -------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
     updateUnitRestrictions();
+
+    // Load the Google Maps API
     loadGoogleMapsApi();
 
+    // Store original material locations for resetting
     const originalMaterialLocations = JSON.parse(JSON.stringify(materialData));
+
+    // Setup event listener for changes in the selected material
     const materialSelect = document.getElementById("material");
+    materialSelect.addEventListener("change", updateUnitRestrictions);
+
+    // Setup event listener for input validation on the "tonsNeeded" input
     const tonsInput = document.getElementById("tonsNeeded");
-    const addressInput = document.getElementById("address");
-    const allowSemiCheckbox = document.getElementById("allowSemi");
     const helperText = document.getElementById("tons-help");
-    const form = document.getElementById("calcForm");
-
-    // Debounce helper to avoid excessive calls
-    let debounceTimer;
-    function debounceCalculate() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            // Reset materialInfo.locations to the original state before filtering pits/yards
-            Object.keys(materialData).forEach(key => {
-                materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
-            });
-            calculateCost();
-        }, 250); // adjust delay as needed
-    }
-
-    materialSelect.addEventListener("change", () => {
-        updateUnitRestrictions();
-        debounceCalculate();
-    });
-
     tonsInput.addEventListener("input", function () {
-        const selectedMaterial = materialSelect.value;
+        const selectedMaterial = document.getElementById("material").value;
         const materialInfo = materialData[selectedMaterial];
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-    
-        // Only show error if the input is not empty, is a number, and less than min
-        if (this.value !== "" && !isNaN(value) && value < min) {
+
+        if (value < min) {
             helperText.style.display = "block";
             helperText.textContent = `Please enter a value of at least ${min} ${unit}s.`;
         } else {
             helperText.style.display = "none";
         }
-        debounceCalculate();
     });
 
-    if (addressInput) {
-        addressInput.addEventListener("input", debounceCalculate);
-    }
-    if (allowSemiCheckbox) {
-        allowSemiCheckbox.addEventListener("change", debounceCalculate);
-    }
-
-    // Keep manual submit for accessibility
+    // Add event listener for form submission to prevent the default form behavior and refresh functions
+    const form = document.getElementById("calcForm");
     form.addEventListener("submit", function (event) {
         event.preventDefault();
+
+        // Reset materialInfo.locations to the original state before filtering pits/yards
         Object.keys(materialData).forEach(key => {
             materialData[key].locations = JSON.parse(JSON.stringify(originalMaterialLocations[key].locations));
         });
+
+        // Call the cost calculation function
         calculateCost();
     });
 });
