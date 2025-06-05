@@ -958,7 +958,7 @@ function updateUnitRestrictions() {
 
     tonsInput.placeholder = `Enter amount needed in ${unit}s`;
 
-    const semiOptionDiv = document.getElementById("semiTruckOption");
+        const semiOptionDiv = document.getElementById("semiTruckOption");
     const allowSemiCheckbox = document.getElementById("allowSemi");
 
     // Check if any location for the selected material supports truck_D (semi)
@@ -1685,31 +1685,83 @@ async function computePitCosts(pitLoads, pit, distances, addressInput, yardLoads
     lastJourneyTime = totalJourneyTime;
 
     // Calculate the cost for each pit load
-    pitLoads.forEach(load => {
+    let truckTypeTotals = {}; // Group totals by truck type
+    let truckFirstTripFlags = {}; // Track if first trip has been made per truck type
+
+    for (let i = 0; i < pitLoads.length; i++) {
+        const load = pitLoads[i];
         if (!load.amount || isNaN(load.amount) || !load.rate || isNaN(load.rate)) {
             console.error(`ERROR: Invalid pit load found:`, load);
-            return;
+            continue;
         }
 
-        let costPerUnit = (((totalJourneyTime / 60) * load.rate) / totalLoadAmount) + (pit.price || 0);
+        const truckName = load.truckName;
 
-        if (isNaN(costPerUnit) || !isFinite(costPerUnit)) {
-            console.error(`ERROR: Invalid costPerUnit for ${load.truckName}. Defaulting to $0.`);
-            costPerUnit = 0;
+        // Determine if this is the first trip for this truck type
+        const isFirstTripForType = !truckFirstTripFlags[truckName];
+
+        // Calculate trip time
+        const tripTimeMin = isFirstTripForType
+            ? (driveTimeYardToPit + driveTimePitToDrop + driveTimeDropToYard) * 1.15 + 36
+            : (driveTimePitToDrop * 2) * 1.15 + 36;
+
+        // Mark that we've now calculated the first trip for this truck type
+        truckFirstTripFlags[truckName] = true;
+
+        const tripTimeHours = tripTimeMin / 60;
+        const timeCost = tripTimeHours * load.rate;
+        const costPerUnit = (timeCost / load.amount) + (pit.price || 0);
+        const costPerLoad = costPerUnit * load.amount;
+
+        if (!truckTypeTotals[truckName]) {
+            truckTypeTotals[truckName] = {
+                truckName,
+                rate: load.rate,
+                tripsByAmount: {}
+            };
         }
 
-        let costPerLoad = costPerUnit * load.amount;
+        const key = load.amount.toString();
+        if (!truckTypeTotals[truckName].tripsByAmount[key]) {
+            truckTypeTotals[truckName].tripsByAmount[key] = {
+                count: 0,
+                totalCost: 0
+            };
+        }
 
-        detailedCosts.push({
-            truckName: load.truckName,
-            rate: load.rate,
-            amount: load.amount,
-            costPerUnit,
-            costPerLoad
-        });
+        truckTypeTotals[truckName].tripsByAmount[key].count += 1;
+        truckTypeTotals[truckName].tripsByAmount[key].totalCost += costPerLoad;
 
         totalCost += costPerLoad;
-    });   
+    }
+
+    // Finalize and push truck-type-level breakdowns
+    for (const [, data] of Object.entries(truckTypeTotals)) {
+        const { truckName, rate, tripsByAmount } = data;
+
+        // Sort by amount DESCENDING to show larger loads first
+        const sortedAmounts = Object.entries(tripsByAmount)
+            .map(([amountKey, tripData]) => ({
+                amount: parseInt(amountKey, 10),
+                ...tripData
+            }))
+            .sort((a, b) => b.amount - a.amount); // Descending sort
+
+        for (const { amount, count, totalCost } of sortedAmounts) {
+            const costPerUnit = totalCost / (amount * count);
+
+            for (let i = 0; i < count; i++) {
+                detailedCosts.push({
+                    truckName,
+                    rate,
+                    amount,
+                    costPerUnit,
+                    costPerLoad: costPerUnit * amount,
+                    count: 1
+                });
+            }
+        }
+    }
 
     let yardCostData = null;
 
@@ -2063,7 +2115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const unit = materialInfo?.sold_by || 'unit';
         const min = parseInt(this.min);
         const value = parseFloat(this.value);
-
+    
         // Only show error if the input is not empty, is a number, and less than min
         if (this.value !== "" && !isNaN(value) && value < min) {
             helperText.style.display = "block";
