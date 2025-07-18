@@ -202,7 +202,7 @@ const materialData = {
             {"name": "Solo Truck", "min": 9, "max": 15, "rate": 160}
         ],
         "truck_C": [
-            {"name": "Super Truck", "min": 40, "max": 40, "rate": 185}
+            {"name": "Super Truck", "min": 16, "max": 20, "rate": 185}
         ],
         "truck_D": [
             {"name": "Semi Truck", "min": 50, "max": 50, "rate": 185}
